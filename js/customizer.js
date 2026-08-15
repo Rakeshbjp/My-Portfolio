@@ -755,33 +755,150 @@
       });
     }
 
-    // Resume PDF File Picker
+    // Intelligent PDF Parsing Helper
+    async function extractTextFromPdf(arrayBuffer) {
+      if (!window.pdfjsLib) {
+        console.warn('PDF.js library not loaded.');
+        return '';
+      }
+      try {
+        const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageStr = textContent.items.map(item => item.str).join(' ');
+          fullText += pageStr + '\n';
+        }
+        return fullText;
+      } catch (err) {
+        console.warn('PDF text extraction error:', err);
+        return '';
+      }
+    }
+
+    function parseResumeDetailsFromText(rawText) {
+      if (!rawText) return {};
+      const results = {};
+
+      // 1. Email extraction
+      const emailMatch = rawText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      if (emailMatch) results.email = emailMatch[0].trim();
+
+      // 2. Phone extraction (international, India +91, 10 digits)
+      const phoneMatch = rawText.match(/(?:\+91[\s-]?)?[6-9]\d{9}|\+?1?[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/);
+      if (phoneMatch) results.phone = phoneMatch[0].trim();
+
+      // 3. GitHub extraction
+      const githubMatch = rawText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9_-]+)/i);
+      if (githubMatch) results.github = githubMatch[0].startsWith('http') ? githubMatch[0] : `https://${githubMatch[0]}`;
+
+      // 4. LinkedIn extraction
+      const linkedinMatch = rawText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([A-Za-z0-9_.-]+)/i);
+      if (linkedinMatch) results.linkedin = linkedinMatch[0].startsWith('http') ? linkedinMatch[0] : `https://${linkedinMatch[0]}`;
+
+      // 5. Location extraction
+      const locationKeywords = ['Bengaluru', 'Bangalore', 'Karnataka', 'India', 'Hyderabad', 'Chennai', 'Mumbai', 'Delhi', 'Pune', 'San Francisco', 'New York', 'California'];
+      for (const kw of locationKeywords) {
+        if (rawText.toLowerCase().includes(kw.toLowerCase())) {
+          if (rawText.toLowerCase().includes('bengaluru') || rawText.toLowerCase().includes('bangalore')) {
+            results.location = 'Bengaluru, Karnataka, India';
+          } else if (rawText.toLowerCase().includes('india')) {
+            results.location = `${kw}, India`;
+          } else {
+            results.location = kw;
+          }
+          break;
+        }
+      }
+
+      // 6. Name extraction
+      const cleanLines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2 && !l.includes('@') && !l.includes('http'));
+      if (cleanLines.length > 0) {
+        const candidate = cleanLines[0].replace(/[^a-zA-Z\s.]/g, '').trim();
+        if (candidate.length > 3 && candidate.split(' ').length <= 4) {
+          results.name = candidate;
+        }
+      }
+
+      // 7. Title / Role extraction
+      if (rawText.toLowerCase().includes('mern stack developer')) {
+        results.title = 'MERN Stack Developer';
+      } else if (rawText.toLowerCase().includes('full stack developer')) {
+        results.title = 'Full Stack Developer';
+      } else if (rawText.toLowerCase().includes('software developer') || rawText.toLowerCase().includes('software engineer')) {
+        results.title = 'Software Developer';
+      } else if (rawText.toLowerCase().includes('developer')) {
+        results.title = 'Developer';
+      }
+
+      // 8. Executive Summary / Bio extraction
+      const summaryMatch = rawText.match(/(?:EXECUTIVE\s+SUMMARY|PROFESSIONAL\s+SUMMARY|SUMMARY|OBJECTIVE|ABOUT\s+ME)[\s\S]*?(?:EDUCATION|EXPERIENCE|SKILLS|PROJECTS|TECHNICAL\s+SKILLS|CERTIFICATIONS)/i);
+      if (summaryMatch) {
+        let summaryText = summaryMatch[0]
+          .replace(/^(?:EXECUTIVE\s+SUMMARY|PROFESSIONAL\s+SUMMARY|SUMMARY|OBJECTIVE|ABOUT\s+ME)[:\s-]*/i, '')
+          .replace(/(?:EDUCATION|EXPERIENCE|SKILLS|PROJECTS|TECHNICAL\s+SKILLS|CERTIFICATIONS)$/i, '')
+          .trim();
+        if (summaryText.length > 30) {
+          results.bio = summaryText;
+        }
+      }
+
+      return results;
+    }
+
+    // Resume PDF File Picker & Auto-Parser
     const resumeFileInput = document.getElementById('cust-resume-file');
     if (resumeFileInput) {
-      resumeFileInput.addEventListener('change', function (e) {
+      resumeFileInput.addEventListener('change', async function (e) {
         const file = e.target.files[0];
-        if (file) {
-          if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-            showToast('⚠️ Please choose a valid .PDF document file.');
-            return;
-          }
-          if (file.size > 8 * 1024 * 1024) {
-            showToast('⚠️ PDF file is larger than 8MB. Please compress or link via URL.');
-            return;
-          }
+        if (!file) return;
 
-          const reader = new FileReader();
-          reader.onload = function (evt) {
-            const base64Pdf = evt.target.result;
-            const dataObj = getWorkingData();
-            dataObj.personal = dataObj.personal || {};
-            dataObj.personal.resumePdf = base64Pdf;
-            dataObj.personal.resumeFileName = file.name;
-            saveWorkingData(dataObj, `📄 Resume PDF "${file.name}" uploaded successfully!`);
-            populateDrawerResumeForm();
-          };
-          reader.readAsDataURL(file);
+        if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+          showToast('⚠️ Please choose a valid .PDF document file.');
+          return;
         }
+        if (file.size > 8 * 1024 * 1024) {
+          showToast('⚠️ PDF file is larger than 8MB. Please compress or link via URL.');
+          return;
+        }
+
+        showToast('⏳ Reading & auto-extracting info from PDF...');
+
+        let extractedText = '';
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          extractedText = await extractTextFromPdf(arrayBuffer);
+        } catch (err) {
+          console.warn('Could not extract PDF text:', err);
+        }
+
+        const parsedData = parseResumeDetailsFromText(extractedText);
+
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          const base64Pdf = evt.target.result;
+          const dataObj = getWorkingData();
+          dataObj.personal = dataObj.personal || {};
+
+          dataObj.personal.resumePdf = base64Pdf;
+          dataObj.personal.resumeFileName = file.name;
+
+          // Auto-fetch and merge extracted fields
+          if (parsedData.name && parsedData.name !== 'Your Name') dataObj.personal.name = parsedData.name;
+          if (parsedData.title) dataObj.personal.title = parsedData.title;
+          if (parsedData.email) dataObj.personal.email = parsedData.email;
+          if (parsedData.phone) dataObj.personal.phone = parsedData.phone;
+          if (parsedData.location) dataObj.personal.location = parsedData.location;
+          if (parsedData.github) dataObj.personal.github = parsedData.github;
+          if (parsedData.linkedin) dataObj.personal.linkedin = parsedData.linkedin;
+          if (parsedData.bio) dataObj.personal.bio = parsedData.bio;
+
+          saveWorkingData(dataObj, `🎉 Resume "${file.name}" uploaded & all details auto-fetched!`);
+          populateDrawerProfileForm();
+          populateDrawerResumeForm();
+        };
+        reader.readAsDataURL(file);
       });
     }
 

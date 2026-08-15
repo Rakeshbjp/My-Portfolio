@@ -502,6 +502,7 @@
   // 7. Resume Render
   function renderResume() {
     const container = document.getElementById('resume-preview-content');
+    const badgeEl = document.getElementById('resume-active-badge');
     if (!container) return;
 
     const p = data.personal || {};
@@ -511,36 +512,21 @@
     const edu = data.education || p.education || [];
 
     const hasPdf = Boolean(p.resumePdf || (p.resumeUrl && p.resumeUrl !== '#'));
-    const pdfName = p.resumeFileName || 'Custom_Resume.pdf';
+    const pdfName = p.resumeFileName || (hasPdf ? 'Official_Resume.pdf' : '');
 
-    let pdfBannerHtml = '';
-    if (hasPdf) {
-      pdfBannerHtml = `
-        <div class="resume-pdf-banner">
-          <div class="resume-pdf-info">
-            <span class="resume-pdf-icon">📄</span>
-            <div>
-              <div style="font-weight: 700; color: #10b981; font-size: 0.85rem;">Active Uploaded Resume Document</div>
-              <div class="resume-pdf-name">${escapeHtml(pdfName)}</div>
-            </div>
-          </div>
-          <div class="resume-pdf-actions">
-            <button type="button" class="btn btn-primary btn-sm" onclick="window.viewResumePdf()">
-              👁️ View Uploaded PDF
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="window.downloadResumePdf()">
-              📥 Download PDF
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="window.openCustomizer('drawer-tab-resume')">
-              📤 Replace / Edit PDF
-            </button>
-          </div>
-        </div>
-      `;
+    if (badgeEl) {
+      if (hasPdf) {
+        badgeEl.className = 'resume-active-badge';
+        badgeEl.innerHTML = `📄 ${escapeHtml(pdfName || 'Active PDF Document')}`;
+        badgeEl.style.display = 'inline-flex';
+      } else {
+        badgeEl.className = 'resume-active-badge inactive';
+        badgeEl.innerHTML = `📄 Interactive CV Ready`;
+        badgeEl.style.display = 'inline-flex';
+      }
     }
 
     container.innerHTML = `
-      ${pdfBannerHtml}
       <div class="resume-sheet">
         <div class="resume-sheet-header">
           <h2 class="resume-name">${escapeHtml(p.name || 'Your Name')}</h2>

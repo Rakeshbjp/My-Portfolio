@@ -260,10 +260,13 @@
       <div class="resume-box">
         <div class="resume-header-bar">
           <div>
-            <h3 style="font-family: var(--font-heading); font-weight: 700; font-size: 1.2rem;">Official Engineering Resume</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">Preview credentials or upload & download your custom PDF document</p>
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+              <h3 style="font-family: var(--font-heading); font-weight: 700; font-size: 1.2rem; margin: 0;">Official Engineering Resume</h3>
+              <span id="resume-active-badge" class="resume-active-badge">📄 Rakesh MERN resume.pdf</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">Preview executive summary & credentials or manage your uploaded document</p>
           </div>
-          <div class="resume-actions-group" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <div class="resume-actions-group" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
             <button onclick="window.viewResumePdf()" class="btn btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;" title="View uploaded PDF in new tab">
               👁️ View PDF
             </button>
@@ -271,12 +274,12 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               Download PDF
             </button>
-            <button onclick="window.openCustomizer('drawer-tab-resume')" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;" title="Upload or change PDF">
-              📤 Upload PDF
+            <button onclick="window.openCustomizer('drawer-tab-resume')" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;" title="Edit Resume Information & PDF">
+              ✏️ Edit Resume Info
             </button>
             <button onclick="window.print()" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;" title="Print clean 1-page resume sheet">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-              Print Clean Sheet
+              🖨️ Print Resume
             </button>
           </div>
         </div>
@@ -638,10 +641,18 @@
     </div>
   </div>
 
+  <!-- PDF.js Library for Client-side Resume Text Auto-Extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+
   <!-- JavaScript Scripts -->
-  <script src="js/data.js?v=6"></script>
-  <script src="js/canvas-bg.js?v=6"></script>
-  <script src="js/customizer.js?v=6"></script>
-  <script src="js/app.js?v=6"></script>
+  <script src="js/data.js?v=7"></script>
+  <script src="js/canvas-bg.js?v=7"></script>
+  <script src="js/customizer.js?v=7"></script>
+  <script src="js/app.js?v=7"></script>
 </body>
 </html>
