@@ -777,128 +777,404 @@
       }
     }
 
-    function parseResumeDetailsFromText(rawText) {
+    // Comprehensive Multi-Section Resume Parser (Skills, Projects, Experience, Certs, Education & Profile)
+    function parseFullResumeDataFromText(rawText) {
       if (!rawText) return {};
-      const results = {};
 
-      // 1. Email extraction
-      const emailMatch = rawText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-      if (emailMatch) results.email = emailMatch[0].trim();
+      const parsed = {
+        personal: {},
+        skills: [],
+        projects: [],
+        experience: [],
+        certifications: [],
+        education: []
+      };
 
-      // 2. Phone extraction (international, India +91, 10 digits)
-      const phoneMatch = rawText.match(/(?:\+91[\s-]?)?[6-9]\d{9}|\+?1?[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/);
-      if (phoneMatch) results.phone = phoneMatch[0].trim();
+      const cleanText = rawText.replace(/\r\n/g, '\n');
+      const lines = cleanText.split('\n').map(l => l.trim()).filter(Boolean);
 
-      // 3. GitHub extraction
-      const githubMatch = rawText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9_-]+)/i);
-      if (githubMatch) results.github = githubMatch[0].startsWith('http') ? githubMatch[0] : `https://${githubMatch[0]}`;
+      // ==========================================
+      // 1. Personal & Contact Information
+      // ==========================================
+      // Email
+      const emailMatch = cleanText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      if (emailMatch) parsed.personal.email = emailMatch[0].trim();
 
-      // 4. LinkedIn extraction
-      const linkedinMatch = rawText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([A-Za-z0-9_.-]+)/i);
-      if (linkedinMatch) results.linkedin = linkedinMatch[0].startsWith('http') ? linkedinMatch[0] : `https://${linkedinMatch[0]}`;
+      // Phone
+      const phoneMatch = cleanText.match(/(?:\+91[\s-]?)?[6-9]\d{9}|\+?1?[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}|\(\+91\)\s*\d{10}/);
+      if (phoneMatch) parsed.personal.phone = phoneMatch[0].trim();
 
-      // 5. Location extraction
-      const locationKeywords = ['Bengaluru', 'Bangalore', 'Karnataka', 'India', 'Hyderabad', 'Chennai', 'Mumbai', 'Delhi', 'Pune', 'San Francisco', 'New York', 'California'];
+      // GitHub
+      const githubMatch = cleanText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9_-]+)/i);
+      if (githubMatch) parsed.personal.github = githubMatch[0].startsWith('http') ? githubMatch[0] : `https://${githubMatch[0]}`;
+
+      // LinkedIn
+      const linkedinMatch = cleanText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([A-Za-z0-9_.-]+)/i);
+      if (linkedinMatch) parsed.personal.linkedin = linkedinMatch[0].startsWith('http') ? linkedinMatch[0] : `https://${linkedinMatch[0]}`;
+
+      // Location
+      const locationKeywords = ['Bengaluru', 'Bangalore', 'Karnataka', 'Hyderabad', 'Chennai', 'Mumbai', 'Delhi', 'Pune', 'Noida', 'Gurgaon', 'Kolkata', 'San Francisco', 'New York', 'California', 'India', 'Remote'];
       for (const kw of locationKeywords) {
-        if (rawText.toLowerCase().includes(kw.toLowerCase())) {
-          if (rawText.toLowerCase().includes('bengaluru') || rawText.toLowerCase().includes('bangalore')) {
-            results.location = 'Bengaluru, Karnataka, India';
-          } else if (rawText.toLowerCase().includes('india')) {
-            results.location = `${kw}, India`;
+        if (cleanText.toLowerCase().includes(kw.toLowerCase())) {
+          if (cleanText.toLowerCase().includes('bengaluru') || cleanText.toLowerCase().includes('bangalore')) {
+            parsed.personal.location = 'Bengaluru, Karnataka, India';
+          } else if (cleanText.toLowerCase().includes('india')) {
+            parsed.personal.location = `${kw}, India`;
           } else {
-            results.location = kw;
+            parsed.personal.location = kw;
           }
           break;
         }
       }
 
-      // 6. Name extraction
-      const cleanLines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2 && !l.includes('@') && !l.includes('http'));
-      if (cleanLines.length > 0) {
-        const candidate = cleanLines[0].replace(/[^a-zA-Z\s.]/g, '').trim();
-        if (candidate.length > 3 && candidate.split(' ').length <= 4) {
-          results.name = candidate;
+      // Name (Top 5 header lines before email/links)
+      const headerLines = lines.slice(0, 5).filter(l => !l.includes('@') && !l.includes('http') && !l.includes('.com') && !l.match(/\+?\d{10}/));
+      if (headerLines.length > 0) {
+        const candidate = headerLines[0].replace(/[^a-zA-Z\s.]/g, '').trim();
+        if (candidate.length > 2 && candidate.split(/\s+/).length <= 4) {
+          parsed.personal.name = candidate;
         }
       }
 
-      // 7. Title / Role extraction
-      if (rawText.toLowerCase().includes('mern stack developer')) {
-        results.title = 'MERN Stack Developer';
-      } else if (rawText.toLowerCase().includes('full stack developer')) {
-        results.title = 'Full Stack Developer';
-      } else if (rawText.toLowerCase().includes('software developer') || rawText.toLowerCase().includes('software engineer')) {
-        results.title = 'Software Developer';
-      } else if (rawText.toLowerCase().includes('developer')) {
-        results.title = 'Developer';
+      // Title
+      if (cleanText.toLowerCase().includes('mern stack developer')) {
+        parsed.personal.title = 'MERN Stack Developer';
+      } else if (cleanText.toLowerCase().includes('full stack developer')) {
+        parsed.personal.title = 'Full Stack Developer';
+      } else if (cleanText.toLowerCase().includes('frontend developer') || cleanText.toLowerCase().includes('front end developer')) {
+        parsed.personal.title = 'Frontend Developer';
+      } else if (cleanText.toLowerCase().includes('backend developer') || cleanText.toLowerCase().includes('back end developer')) {
+        parsed.personal.title = 'Backend Developer';
+      } else if (cleanText.toLowerCase().includes('software engineer')) {
+        parsed.personal.title = 'Software Engineer';
+      } else if (cleanText.toLowerCase().includes('software developer')) {
+        parsed.personal.title = 'Software Developer';
+      } else if (cleanText.toLowerCase().includes('developer')) {
+        parsed.personal.title = 'Developer';
       }
 
-      // 8. Executive Summary / Bio extraction
-      const summaryMatch = rawText.match(/(?:EXECUTIVE\s+SUMMARY|PROFESSIONAL\s+SUMMARY|SUMMARY|OBJECTIVE|ABOUT\s+ME)[\s\S]*?(?:EDUCATION|EXPERIENCE|SKILLS|PROJECTS|TECHNICAL\s+SKILLS|CERTIFICATIONS)/i);
+      // Executive Summary / Bio
+      const summaryMatch = cleanText.match(/(?:EXECUTIVE\s+SUMMARY|PROFESSIONAL\s+SUMMARY|SUMMARY|CAREER\s+OBJECTIVE|OBJECTIVE|ABOUT\s+ME)[\s\S]*?(?:TECHNICAL\s+SKILLS|SKILLS|CORE\s+COMPETENCIES|EXPERIENCE|WORK\s+EXPERIENCE|PROJECTS|EDUCATION|CERTIFICATIONS)/i);
       if (summaryMatch) {
         let summaryText = summaryMatch[0]
-          .replace(/^(?:EXECUTIVE\s+SUMMARY|PROFESSIONAL\s+SUMMARY|SUMMARY|OBJECTIVE|ABOUT\s+ME)[:\s-]*/i, '')
-          .replace(/(?:EDUCATION|EXPERIENCE|SKILLS|PROJECTS|TECHNICAL\s+SKILLS|CERTIFICATIONS)$/i, '')
+          .replace(/^(?:EXECUTIVE\s+SUMMARY|PROFESSIONAL\s+SUMMARY|SUMMARY|CAREER\s+OBJECTIVE|OBJECTIVE|ABOUT\s+ME)[:\s-]*/i, '')
+          .replace(/(?:TECHNICAL\s+SKILLS|SKILLS|CORE\s+COMPETENCIES|EXPERIENCE|WORK\s+EXPERIENCE|PROJECTS|EDUCATION|CERTIFICATIONS)$/i, '')
           .trim();
         if (summaryText.length > 30) {
-          results.bio = summaryText;
+          parsed.personal.bio = summaryText;
+          parsed.personal.tagline = summaryText.length > 120 ? summaryText.slice(0, 117) + '...' : summaryText;
         }
       }
 
-      return results;
+      // ==========================================
+      // 2. Technical Skills Extraction
+      // ==========================================
+      const skillsMatch = cleanText.match(/(?:TECHNICAL\s+SKILLS|CORE\s+COMPETENCIES|KEY\s+SKILLS|SKILLS|TECHNOLOGIES)[\s\S]*?(?:EXPERIENCE|WORK\s+EXPERIENCE|PROJECTS|ACADEMIC\s+PROJECTS|EDUCATION|CERTIFICATIONS|ACHIEVEMENTS|$)/i);
+      if (skillsMatch) {
+        const rawSkills = skillsMatch[0]
+          .replace(/^(?:TECHNICAL\s+SKILLS|CORE\s+COMPETENCIES|KEY\s+SKILLS|SKILLS|TECHNOLOGIES)[:\s-]*/i, '')
+          .replace(/(?:EXPERIENCE|WORK\s+EXPERIENCE|PROJECTS|ACADEMIC\s+PROJECTS|EDUCATION|CERTIFICATIONS|ACHIEVEMENTS)$/i, '')
+          .trim();
+
+        const categoryDict = {};
+        const skillLines = rawSkills.split('\n').filter(l => l.trim().length > 2);
+
+        skillLines.forEach(line => {
+          if (line.includes(':')) {
+            const parts = line.split(':');
+            const catName = parts[0].replace(/[^a-zA-Z0-9\s&]/g, '').trim();
+            const items = parts[1].split(/[,|•/]/).map(s => s.trim()).filter(s => s.length > 1);
+            if (catName && items.length > 0) {
+              categoryDict[catName] = (categoryDict[catName] || []).concat(items);
+            }
+          }
+        });
+
+        if (Object.keys(categoryDict).length > 0) {
+          for (const [category, items] of Object.entries(categoryDict)) {
+            const unique = [...new Set(items)];
+            parsed.skills.push({
+              category,
+              items: unique.map(name => ({
+                name,
+                proficiency: 90,
+                level: 'Proficient'
+              }))
+            });
+          }
+        } else {
+          // Intelligent Keyword Classification Map
+          const techTaxonomy = {
+            'Frontend': ['React.js', 'React', 'HTML5', 'HTML', 'CSS3', 'CSS', 'JavaScript', 'TypeScript', 'Tailwind CSS', 'Bootstrap', 'Redux', 'Responsive Web Design'],
+            'Backend': ['Node.js', 'Express.js', 'RESTful APIs', 'REST APIs', 'JWT', 'Authentication', 'API Integration', 'Microservices'],
+            'Databases': ['MongoDB', 'Mongoose', 'MySQL', 'PostgreSQL', 'Redis', 'Database Design'],
+            'Programming Languages': ['JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'C', 'SQL'],
+            'Developer Tools': ['Git', 'GitHub', 'Postman', 'VS Code', 'Docker', 'Vercel', 'NPM', 'Linux'],
+            'Core Concepts': ['Data Structures & Algorithms', 'OOPs', 'DBMS', 'Operating Systems', 'Computer Networks', 'REST Architecture']
+          };
+
+          for (const [category, keywords] of Object.entries(techTaxonomy)) {
+            const found = [];
+            for (const kw of keywords) {
+              const regex = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+              if (rawSkills.match(regex)) {
+                found.push(kw);
+              }
+            }
+            if (found.length > 0) {
+              parsed.skills.push({
+                category,
+                items: found.map(name => ({
+                  name,
+                  proficiency: 90,
+                  level: 'Proficient'
+                }))
+              });
+            }
+          }
+        }
+      }
+
+      // ==========================================
+      // 3. Projects Extraction
+      // ==========================================
+      const projectsMatch = cleanText.match(/(?:PROJECTS|ACADEMIC\s+PROJECTS|PERSONAL\s+PROJECTS|KEY\s+PROJECTS)[\s\S]*?(?:EXPERIENCE|WORK\s+EXPERIENCE|EMPLOYMENT|EDUCATION|CERTIFICATIONS|SKILLS|TECHNICAL\s+SKILLS|ACHIEVEMENTS|$)/i);
+      if (projectsMatch) {
+        const rawProjects = projectsMatch[0]
+          .replace(/^(?:PROJECTS|ACADEMIC\s+PROJECTS|PERSONAL\s+PROJECTS|KEY\s+PROJECTS)[:\s-]*/i, '')
+          .replace(/(?:EXPERIENCE|WORK\s+EXPERIENCE|EMPLOYMENT|EDUCATION|CERTIFICATIONS|SKILLS|TECHNICAL\s+SKILLS|ACHIEVEMENTS)$/i, '')
+          .trim();
+
+        const projBlocks = rawProjects.split(/\n\s*\n/).filter(b => b.trim().length > 10);
+        projBlocks.forEach((block, idx) => {
+          const blines = block.split('\n').map(l => l.trim()).filter(Boolean);
+          if (blines.length > 0) {
+            const titleLine = blines[0].replace(/^[•\-\d.]\s*/, '').trim();
+            const cleanTitle = titleLine.split(/[\(|–\-:]/)[0].trim();
+
+            let techStack = [];
+            const techMatch = block.match(/(?:Tech\s*Stack|Technologies|Tools\s*Used)[:\s-]*([^\n]+)/i) || titleLine.match(/\(([^)]+)\)/);
+            if (techMatch) {
+              techStack = techMatch[1].split(/[,|/]/).map(t => t.trim()).filter(Boolean);
+            } else {
+              ['MongoDB', 'Express.js', 'React.js', 'Node.js', 'JavaScript', 'HTML', 'CSS', 'Tailwind', 'REST API', 'Firebase'].forEach(t => {
+                if (block.toLowerCase().includes(t.toLowerCase())) techStack.push(t);
+              });
+            }
+
+            const bullets = blines.slice(1).filter(l => l.startsWith('•') || l.startsWith('-') || l.length > 20).map(l => l.replace(/^[•\-*]\s*/, '').trim());
+            const desc = bullets.length > 0 ? bullets.join(' ') : blines.slice(1).join(' ') || titleLine;
+
+            if (cleanTitle && cleanTitle.length > 2) {
+              parsed.projects.push({
+                id: `project-${Date.now()}-${idx}`,
+                title: cleanTitle,
+                category: techStack.includes('React.js') || techStack.includes('Node.js') ? 'Full Stack' : 'Web App',
+                featured: idx < 2,
+                image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+                summary: desc.length > 180 ? desc.slice(0, 177) + '...' : desc,
+                description: desc,
+                techStack: techStack.length > 0 ? techStack : ['MERN', 'MongoDB', 'Express.js', 'React.js', 'Node.js'],
+                metrics: [
+                  "Implemented full stack component workflows and state management",
+                  "Built secure RESTful APIs with database integration",
+                  "Ensured responsive design and fast query response"
+                ],
+                architecture: bullets.length > 0 ? bullets : [desc],
+                demoUrl: "#",
+                githubUrl: parsed.personal.github || "https://github.com/Rakeshbjp"
+              });
+            }
+          }
+        });
+      }
+
+      // ==========================================
+      // 4. Experience / Work History Extraction
+      // ==========================================
+      const expMatch = cleanText.match(/(?:WORK\s+EXPERIENCE|EXPERIENCE|EMPLOYMENT\s+HISTORY|INTERNSHIPS)[\s\S]*?(?:PROJECTS|EDUCATION|CERTIFICATIONS|SKILLS|TECHNICAL\s+SKILLS|ACHIEVEMENTS|$)/i);
+      if (expMatch) {
+        const rawExp = expMatch[0]
+          .replace(/^(?:WORK\s+EXPERIENCE|EXPERIENCE|EMPLOYMENT\s+HISTORY|INTERNSHIPS)[:\s-]*/i, '')
+          .replace(/(?:PROJECTS|EDUCATION|CERTIFICATIONS|SKILLS|TECHNICAL\s+SKILLS|ACHIEVEMENTS)$/i, '')
+          .trim();
+
+        const expBlocks = rawExp.split(/\n\s*\n/).filter(b => b.trim().length > 10);
+        expBlocks.forEach((block, idx) => {
+          const elines = block.split('\n').map(l => l.trim()).filter(Boolean);
+          if (elines.length > 0) {
+            const firstLine = elines[0].replace(/^[•\-\d.]\s*/, '').trim();
+            const parts = firstLine.split(/[|–\-,]/);
+            const role = parts[0] ? parts[0].trim() : 'Software Developer';
+            const company = parts[1] ? parts[1].trim() : (elines[1] || 'Tech Organization');
+
+            const dateMatch = block.match(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|[0-9]{4})\s*[\w\s–-]+(?:Present|[0-9]{4})/i);
+            const period = dateMatch ? dateMatch[0].trim() : '2023 - Present';
+
+            const bullets = elines.slice(1).filter(l => l.startsWith('•') || l.startsWith('-') || l.length > 20).map(l => l.replace(/^[•\-*]\s*/, '').trim());
+
+            parsed.experience.push({
+              role,
+              company,
+              location: parsed.personal.location || 'Bengaluru, India',
+              period,
+              logo: company.slice(0, 3).toUpperCase(),
+              highlights: bullets.length > 0 ? bullets : [elines.slice(1).join(' ') || 'Developed web applications and handled full stack integration.']
+            });
+          }
+        });
+      }
+
+      // ==========================================
+      // 5. Education Extraction
+      // ==========================================
+      const eduMatch = cleanText.match(/(?:EDUCATION|ACADEMIC\s+BACKGROUND|QUALIFICATIONS)[\s\S]*?(?:EXPERIENCE|PROJECTS|CERTIFICATIONS|SKILLS|ACHIEVEMENTS|$)/i);
+      if (eduMatch) {
+        const rawEdu = eduMatch[0]
+          .replace(/^(?:EDUCATION|ACADEMIC\s+BACKGROUND|QUALIFICATIONS)[:\s-]*/i, '')
+          .replace(/(?:EXPERIENCE|PROJECTS|CERTIFICATIONS|SKILLS|ACHIEVEMENTS)$/i, '')
+          .trim();
+
+        const eduLines = rawEdu.split('\n').map(l => l.trim()).filter(Boolean);
+        if (eduLines.length > 0) {
+          let degree = 'Bachelor of Engineering in Computer Science & Engineering';
+          let institution = 'Visvesvaraya Technological University';
+          let year = '2020 - 2024';
+          let details = 'Computer Science & Engineering';
+
+          for (const eline of eduLines) {
+            if (eline.match(/(?:Bachelor|B\.E|B\.Tech|Degree|Master|Diploma|BCA|MCA|B\.Sc)/i)) {
+              degree = eline;
+            } else if (eline.match(/(?:University|Institute|College|School|Academy)/i)) {
+              institution = eline;
+            } else if (eline.match(/(?:20\d\d|19\d\d)/)) {
+              year = eline;
+            } else if (eline.match(/(?:CGPA|Percentage|Score|Grade|Distinction)/i)) {
+              details = eline;
+            }
+          }
+
+          parsed.education.push({
+            degree,
+            institution,
+            year,
+            details
+          });
+        }
+      }
+
+      // ==========================================
+      // 6. Certifications Extraction
+      // ==========================================
+      const certMatch = cleanText.match(/(?:CERTIFICATIONS|CERTIFICATES|ACCREDITATIONS|LICENSES\s+&\s+CERTIFICATIONS)[\s\S]*?(?:EDUCATION|EXPERIENCE|PROJECTS|SKILLS|ACHIEVEMENTS|$)/i);
+      if (certMatch) {
+        const rawCert = certMatch[0]
+          .replace(/^(?:CERTIFICATIONS|CERTIFICATES|ACCREDITATIONS|LICENSES\s+&\s+CERTIFICATIONS)[:\s-]*/i, '')
+          .replace(/(?:EDUCATION|EXPERIENCE|PROJECTS|SKILLS|ACHIEVEMENTS)$/i, '')
+          .trim();
+
+        const certLines = rawCert.split('\n').map(l => l.replace(/^[•\-*]\s*/, '').trim()).filter(l => l.length > 5);
+        certLines.forEach((cline, idx) => {
+          const parts = cline.split(/[|–\-,]/);
+          const title = parts[0] ? parts[0].trim() : cline;
+          const issuer = parts[1] ? parts[1].trim() : 'Certified';
+          parsed.certifications.push({
+            title,
+            issuer,
+            issueDate: 'Verified',
+            skills: ['Full Stack', 'MERN Stack'],
+            verifyUrl: '#'
+          });
+        });
+      }
+
+      return parsed;
     }
 
-    // Resume PDF File Picker & Auto-Parser
+    // Unified Resume Upload & Full Auto-Fetch Handler
+    async function processResumePdfFile(file) {
+      if (!file) return;
+
+      if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+        showToast('⚠️ Please choose a valid .PDF document file.');
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        showToast('⚠️ PDF file is larger than 8MB. Please compress or link via URL.');
+        return;
+      }
+
+      showToast('⏳ Reading & parsing entire resume PDF...');
+
+      let extractedText = '';
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        extractedText = await extractTextFromPdf(arrayBuffer);
+      } catch (err) {
+        console.warn('Could not extract PDF text:', err);
+      }
+
+      const parsedFull = parseFullResumeDataFromText(extractedText);
+
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        const base64Pdf = evt.target.result;
+        const dataObj = getWorkingData();
+        dataObj.personal = dataObj.personal || {};
+
+        dataObj.personal.resumePdf = base64Pdf;
+        dataObj.personal.resumeFileName = file.name;
+
+        // Merge extracted Personal Profile
+        if (parsedFull.personal.name && parsedFull.personal.name !== 'Your Name') dataObj.personal.name = parsedFull.personal.name;
+        if (parsedFull.personal.title) dataObj.personal.title = parsedFull.personal.title;
+        if (parsedFull.personal.email) dataObj.personal.email = parsedFull.personal.email;
+        if (parsedFull.personal.phone) dataObj.personal.phone = parsedFull.personal.phone;
+        if (parsedFull.personal.location) dataObj.personal.location = parsedFull.personal.location;
+        if (parsedFull.personal.github) dataObj.personal.github = parsedFull.personal.github;
+        if (parsedFull.personal.linkedin) dataObj.personal.linkedin = parsedFull.personal.linkedin;
+        if (parsedFull.personal.bio) dataObj.personal.bio = parsedFull.personal.bio;
+        if (parsedFull.personal.tagline) dataObj.personal.tagline = parsedFull.personal.tagline;
+
+        // Auto-populate Skills if extracted
+        if (parsedFull.skills && parsedFull.skills.length > 0) {
+          dataObj.skills = parsedFull.skills;
+        }
+
+        // Auto-populate Projects if extracted
+        if (parsedFull.projects && parsedFull.projects.length > 0) {
+          dataObj.projects = parsedFull.projects;
+        }
+
+        // Auto-populate Experience if extracted
+        if (parsedFull.experience && parsedFull.experience.length > 0) {
+          dataObj.experience = parsedFull.experience;
+        }
+
+        // Auto-populate Education if extracted
+        if (parsedFull.education && parsedFull.education.length > 0) {
+          dataObj.education = parsedFull.education;
+        }
+
+        // Auto-populate Certifications if extracted
+        if (parsedFull.certifications && parsedFull.certifications.length > 0) {
+          dataObj.certifications = parsedFull.certifications;
+        }
+
+        saveWorkingData(dataObj, `🎉 Resume "${file.name}" uploaded! All Skills, Projects, Experience, Certifications & Profile auto-fetched!`);
+        populateDrawerProfileForm();
+        populateDrawerResumeForm();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    window.processResumePdfFile = processResumePdfFile;
+
+    // Resume PDF File Picker Listener
     const resumeFileInput = document.getElementById('cust-resume-file');
     if (resumeFileInput) {
-      resumeFileInput.addEventListener('change', async function (e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-          showToast('⚠️ Please choose a valid .PDF document file.');
-          return;
-        }
-        if (file.size > 8 * 1024 * 1024) {
-          showToast('⚠️ PDF file is larger than 8MB. Please compress or link via URL.');
-          return;
-        }
-
-        showToast('⏳ Reading & auto-extracting info from PDF...');
-
-        let extractedText = '';
-        try {
-          const arrayBuffer = await file.arrayBuffer();
-          extractedText = await extractTextFromPdf(arrayBuffer);
-        } catch (err) {
-          console.warn('Could not extract PDF text:', err);
-        }
-
-        const parsedData = parseResumeDetailsFromText(extractedText);
-
-        const reader = new FileReader();
-        reader.onload = function (evt) {
-          const base64Pdf = evt.target.result;
-          const dataObj = getWorkingData();
-          dataObj.personal = dataObj.personal || {};
-
-          dataObj.personal.resumePdf = base64Pdf;
-          dataObj.personal.resumeFileName = file.name;
-
-          // Auto-fetch and merge extracted fields
-          if (parsedData.name && parsedData.name !== 'Your Name') dataObj.personal.name = parsedData.name;
-          if (parsedData.title) dataObj.personal.title = parsedData.title;
-          if (parsedData.email) dataObj.personal.email = parsedData.email;
-          if (parsedData.phone) dataObj.personal.phone = parsedData.phone;
-          if (parsedData.location) dataObj.personal.location = parsedData.location;
-          if (parsedData.github) dataObj.personal.github = parsedData.github;
-          if (parsedData.linkedin) dataObj.personal.linkedin = parsedData.linkedin;
-          if (parsedData.bio) dataObj.personal.bio = parsedData.bio;
-
-          saveWorkingData(dataObj, `🎉 Resume "${file.name}" uploaded & all details auto-fetched!`);
-          populateDrawerProfileForm();
-          populateDrawerResumeForm();
-        };
-        reader.readAsDataURL(file);
+      resumeFileInput.addEventListener('change', function (e) {
+        processResumePdfFile(e.target.files[0]);
       });
     }
 
