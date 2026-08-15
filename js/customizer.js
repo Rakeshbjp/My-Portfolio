@@ -64,11 +64,25 @@
       } else {
         parsed.stats = [];
       }
-      parsed.skills = Array.isArray(parsed.skills) ? parsed.skills : [];
-      parsed.projects = Array.isArray(parsed.projects) ? parsed.projects : [];
-      parsed.experience = Array.isArray(parsed.experience) ? parsed.experience : [];
-      parsed.certifications = Array.isArray(parsed.certifications) ? parsed.certifications : [];
-      parsed.education = Array.isArray(parsed.education) ? parsed.education : [];
+      parsed.skills = Array.isArray(parsed.skills) && parsed.skills.length > 0
+        ? parsed.skills
+        : (window.portfolioData && Array.isArray(window.portfolioData.skills) ? JSON.parse(JSON.stringify(window.portfolioData.skills)) : []);
+
+      parsed.projects = Array.isArray(parsed.projects) && parsed.projects.length > 0
+        ? parsed.projects
+        : (window.portfolioData && Array.isArray(window.portfolioData.projects) ? JSON.parse(JSON.stringify(window.portfolioData.projects)) : []);
+
+      parsed.experience = Array.isArray(parsed.experience) && parsed.experience.length > 0
+        ? parsed.experience
+        : (window.portfolioData && Array.isArray(window.portfolioData.experience) ? JSON.parse(JSON.stringify(window.portfolioData.experience)) : []);
+
+      parsed.certifications = Array.isArray(parsed.certifications) && parsed.certifications.length > 0
+        ? parsed.certifications
+        : (window.portfolioData && Array.isArray(window.portfolioData.certifications) ? JSON.parse(JSON.stringify(window.portfolioData.certifications)) : []);
+
+      parsed.education = Array.isArray(parsed.education) && parsed.education.length > 0
+        ? parsed.education
+        : (window.portfolioData && Array.isArray(window.portfolioData.education) ? JSON.parse(JSON.stringify(window.portfolioData.education)) : []);
 
       // Auto-sync forward to all storage keys permanently
       try {

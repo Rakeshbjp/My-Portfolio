@@ -25,7 +25,46 @@ const portfolioData = {
     "leetcode": "https://leetcode.com"
   },
   "stats": [],
-  "skills": [],
+  "skills": [
+    {
+      "category": "Frontend Development",
+      "items": [
+        { "name": "React.js", "proficiency": 92, "level": "Proficient" },
+        { "name": "JavaScript (ES6+)", "proficiency": 90, "level": "Proficient" },
+        { "name": "HTML5 & CSS3", "proficiency": 95, "level": "Advanced" },
+        { "name": "Tailwind CSS", "proficiency": 88, "level": "Proficient" },
+        { "name": "Responsive UI Design", "proficiency": 90, "level": "Proficient" }
+      ]
+    },
+    {
+      "category": "Backend Development",
+      "items": [
+        { "name": "Node.js", "proficiency": 88, "level": "Proficient" },
+        { "name": "Express.js", "proficiency": 90, "level": "Proficient" },
+        { "name": "RESTful APIs", "proficiency": 92, "level": "Proficient" },
+        { "name": "Authentication (JWT)", "proficiency": 85, "level": "Proficient" },
+        { "name": "API Development", "proficiency": 88, "level": "Proficient" }
+      ]
+    },
+    {
+      "category": "Databases",
+      "items": [
+        { "name": "MongoDB", "proficiency": 90, "level": "Proficient" },
+        { "name": "Mongoose ODM", "proficiency": 88, "level": "Proficient" },
+        { "name": "Database Operations", "proficiency": 85, "level": "Proficient" }
+      ]
+    },
+    {
+      "category": "Tools & Core CS",
+      "items": [
+        { "name": "Git & GitHub", "proficiency": 92, "level": "Proficient" },
+        { "name": "Postman", "proficiency": 90, "level": "Proficient" },
+        { "name": "VS Code", "proficiency": 95, "level": "Advanced" },
+        { "name": "Data Structures & Algorithms", "proficiency": 82, "level": "Proficient" },
+        { "name": "OOPs & DBMS", "proficiency": 85, "level": "Proficient" }
+      ]
+    }
+  ],
   "projects": [
     {
       "id": "project-1",
@@ -55,12 +94,70 @@ const portfolioData = {
         "Express.js & Node.js REST API handling authentication & CRUD endpoints",
         "MongoDB database with Mongoose schemas for scalable record storage"
       ]
+    },
+    {
+      "id": "project-2",
+      "title": "Full Stack Web Application",
+      "category": "Full Stack MERN",
+      "featured": false,
+      "image": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80",
+      "summary": "Modern interactive web platform built with MongoDB, Express.js, React.js, and Node.js with real-time client-side rendering and REST API integration.",
+      "description": "End-to-end web application developed using the MERN stack featuring responsive UI design, component-based frontend architecture, centralized database management, and asynchronous API communication.",
+      "techStack": [
+        "MongoDB",
+        "Express.js",
+        "React.js",
+        "Node.js",
+        "JavaScript",
+        "HTML5",
+        "CSS3"
+      ],
+      "metrics": [
+        "Modular component architecture for optimal rendering performance and code reuse",
+        "RESTful API integration with robust error handling and structured JSON payloads",
+        "Cross-device responsive design optimized for mobile, tablet, and desktop viewports"
+      ],
+      "demoUrl": "#",
+      "githubUrl": "https://github.com/Rakeshbjp",
+      "architecture": [
+        "Frontend state management with modern React hooks and event handlers",
+        "Express.js routing middleware connecting client requests with database collections",
+        "MongoDB collection design with structured schema validation and indexing"
+      ]
     }
   ],
-  "experience": [],
-  "certifications": [],
+  "experience": [
+    {
+      "role": "MERN Stack Developer (Academic & Project Work)",
+      "company": "Full Stack Web Development",
+      "location": "Bengaluru, Karnataka, India",
+      "period": "2023 - Present",
+      "logo": "MERN",
+      "highlights": [
+        "Built and deployed full-stack web applications using MongoDB, Express.js, React.js, and Node.js.",
+        "Designed and integrated RESTful APIs with secure token-based user authentication (JWT).",
+        "Engineered responsive, mobile-first user interfaces adhering to modern UI/UX principles."
+      ]
+    }
+  ],
+  "certifications": [
+    {
+      "title": "Full Stack Web Development (MERN Stack)",
+      "issuer": "Verified Certification",
+      "issueDate": "2024",
+      "skills": ["React.js", "Node.js", "Express.js", "MongoDB", "JavaScript"],
+      "verifyUrl": "#"
+    }
+  ],
   "achievements": [],
-  "education": []
+  "education": [
+    {
+      "degree": "Bachelor of Engineering in Computer Science & Engineering",
+      "institution": "Visvesvaraya Technological University",
+      "year": "2020 - 2024",
+      "details": "Specialized in Full Stack Web Development, Data Structures, Database Management Systems, and Software Engineering Principles."
+    }
+  ]
 };
 
 // Export to Global Window Scope
