@@ -3,12 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Developer Portfolio</title>
+  <title>S Rakesh Kumar | Developer Portfolio</title>
   
+  <!-- Cache Control - Force Fresh Content -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <!-- SEO & OpenGraph Meta Tags -->
-  <meta name="description" content="Personal Developer & Engineer Portfolio with interactive projects, architecture blueprints, skills matrix, and professional experience.">
-  <meta name="keywords" content="Software Engineer, Developer, Full Stack, Cloud Architect, Systems Engineer, Portfolio">
-  <meta property="og:title" content="Developer Portfolio">
+  <meta name="description" content="S Rakesh Kumar - MERN Stack Developer Portfolio with interactive projects, skills matrix, and professional experience.">
+  <meta name="keywords" content="S Rakesh Kumar, MERN Stack Developer, Full Stack, React, Node.js, MongoDB, Portfolio">
+  <meta property="og:title" content="S Rakesh Kumar | Developer Portfolio">
   <meta property="og:description" content="Explore interactive projects, architecture blueprints, skills matrix, and professional experience.">
   <meta property="og:type" content="website">
   
@@ -16,7 +21,25 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/styles.css?v=13">
+  <link rel="stylesheet" href="css/styles.css?v=14">
+
+  <!-- Data Version Sync: Clear stale localStorage when data.js version changes -->
+  <script>
+    (function() {
+      var DATA_VERSION = 'v14';
+      try {
+        var storedVersion = localStorage.getItem('portfolio_data_version');
+        if (storedVersion !== DATA_VERSION) {
+          // Version mismatch — clear stale cached data so fresh data.js is used
+          localStorage.removeItem('portfolioData');
+          localStorage.removeItem('portfolio_data');
+          localStorage.removeItem('portfolio-data');
+          localStorage.removeItem('portfolioBackup');
+          localStorage.setItem('portfolio_data_version', DATA_VERSION);
+        }
+      } catch(e) {}
+    })();
+  </script>
 </head>
 <body>
 
@@ -668,9 +691,9 @@
   </script>
 
   <!-- JavaScript Scripts -->
-  <script src="js/data.js?v=13"></script>
-  <script src="js/canvas-bg.js?v=13"></script>
-  <script src="js/customizer.js?v=13"></script>
-  <script src="js/app.js?v=13"></script>
+  <script src="js/data.js?v=14"></script>
+  <script src="js/canvas-bg.js?v=14"></script>
+  <script src="js/customizer.js?v=14"></script>
+  <script src="js/app.js?v=14"></script>
 </body>
 </html>
