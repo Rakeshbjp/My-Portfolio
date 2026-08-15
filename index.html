@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Portfolio</title>
+  
+  <!-- SEO & OpenGraph Meta Tags -->
+  <meta name="description" content="Personal Developer & Engineer Portfolio with interactive projects, architecture blueprints, skills matrix, and professional experience.">
+  <meta name="keywords" content="Software Engineer, Developer, Full Stack, Cloud Architect, Systems Engineer, Portfolio">
+  <meta property="og:title" content="Developer Portfolio">
+  <meta property="og:description" content="Explore interactive projects, architecture blueprints, skills matrix, and professional experience.">
+  <meta property="og:type" content="website">
+  
+  <!-- Favicon to prevent 404 -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/styles.css?v=6">
+</head>
+<body>
+
+  <!-- Ambient Interactive Canvas Background -->
+  <canvas id="ambient-canvas"></canvas>
+
+  <!-- Sticky Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="#" class="brand-logo">
+        <span class="gradient-text" id="navbar-brand-name">&lt;Developer /&gt;</span>
+        <span class="brand-badge">PORTFOLIO</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#skills" class="nav-link">Skills</a></li>
+        <li><a href="#projects" class="nav-link">Projects</a></li>
+        <li><a href="#experience" class="nav-link">Experience</a></li>
+        <li><a href="#certifications" class="nav-link">Certifications</a></li>
+        <li><a href="#resume" class="nav-link">Resume</a></li>
+        <li><a href="#contact" class="nav-link">Contact</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle-btn" class="icon-btn" title="Toggle Dark/Light Mode" aria-label="Toggle Dark/Light Mode">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+
+        <!-- Live Content & Customizer Drawer Toggle -->
+        <button id="toggle-customizer-btn" class="icon-btn" title="Portfolio Settings & Content Editor" aria-label="Portfolio Settings & Content Editor">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+
+        <a href="#contact" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+          Get In Touch
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section" id="hero">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-content">
+          <div class="status-pill">
+            <span class="pulse-dot"></span>
+            <span id="hero-availability">Available for New Opportunities</span>
+          </div>
+
+          <h1 class="hero-title">
+            Hi, I'm <span class="gradient-text" id="hero-name">S Rakesh Kumar</span>
+          </h1>
+
+          <p class="hero-subtitle" id="hero-title">Developer</p>
+
+          <p class="hero-bio" id="hero-bio">
+            Passionate software developer experienced in engineering modern web applications, scalable backend systems, and clean interactive user interfaces.
+          </p>
+
+          <div class="hero-ctas">
+            <a href="#projects" class="btn btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+              Explore Projects
+            </a>
+            <a href="#resume" class="btn btn-secondary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              View Resume
+            </a>
+            <button type="button" class="btn btn-secondary open-customizer-btn" onclick="window.openCustomizer('drawer-tab-profile')" style="border-style: dashed;" title="Edit Personal Details & Avatar">
+              ✏️ Edit Profile
+            </button>
+          </div>
+
+          <div class="social-links">
+            <a href="https://github.com/inkworldwide" id="hero-github" target="_blank" class="social-icon" title="GitHub" aria-label="GitHub">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+            </a>
+            <a href="https://linkedin.com" id="hero-linkedin" target="_blank" class="social-icon" title="LinkedIn" aria-label="LinkedIn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Hero Avatar Card -->
+        <div class="hero-card">
+          <div class="avatar-wrapper" onclick="window.openCustomizer('drawer-tab-profile')" style="cursor: pointer;" title="Click to Change Photo">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80" alt="Avatar" id="hero-avatar" class="avatar-img" />
+            <div class="avatar-overlay">
+              <span>📷</span> <span>CHANGE PHOTO</span>
+            </div>
+          </div>
+          <div class="card-location">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <span id="hero-location">India (Open to Remote / Hybrid)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Impact Statistics Counter -->
+  <section class="stats-section">
+    <div class="container">
+      <div class="stats-grid" id="stats-grid">
+        <!-- Rendered by app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Skills Matrix -->
+  <section id="skills">
+    <div class="container">
+      <div class="section-header-row">
+        <div class="section-header">
+          <span class="section-tag">TECHS & COMPETENCIES</span>
+          <h2 class="section-title">Technical Skills Matrix</h2>
+          <p class="section-subtitle">Categorized proficiency across modern programming languages, cloud systems, databases, and frameworks.</p>
+        </div>
+        <div class="section-action-buttons">
+          <button class="btn btn-primary btn-sm" onclick="window.openItemEditor({ type: 'skill', mode: 'add' })">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Skill
+          </button>
+        </div>
+      </div>
+
+      <div class="skills-controls">
+        <div class="skills-tabs" id="skills-tabs">
+          <!-- Filter Tabs -->
+        </div>
+
+        <div class="search-input-wrapper">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="skills-search" class="search-input" placeholder="Search skill or framework..." />
+        </div>
+      </div>
+
+      <div class="skills-grid" id="skills-grid">
+        <!-- Rendered by app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Projects Showcase -->
+  <section id="projects">
+    <div class="container">
+      <div class="section-header-row">
+        <div class="section-header">
+          <span class="section-tag">FEATURED WORK</span>
+          <h2 class="section-title">Production Projects Showcase</h2>
+          <p class="section-subtitle">Selected engineering projects highlighting distributed architecture, AI workflows, and high-throughput systems.</p>
+        </div>
+        <div class="section-action-buttons">
+          <button class="btn btn-primary btn-sm" onclick="window.openItemEditor({ type: 'project', mode: 'add' })">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Project
+          </button>
+        </div>
+      </div>
+
+      <div class="project-filters" id="project-filters">
+        <!-- Filter Tabs -->
+      </div>
+
+      <div class="projects-grid" id="projects-grid">
+        <!-- Rendered by app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Experience Section -->
+  <section id="experience">
+    <div class="container">
+      <div class="section-header-row">
+        <div class="section-header">
+          <span class="section-tag">CAREER HISTORY</span>
+          <h2 class="section-title">Professional Experience</h2>
+          <p class="section-subtitle">Track record of technical leadership and architectural achievements in high-growth companies.</p>
+        </div>
+        <div class="section-action-buttons">
+          <button class="btn btn-primary btn-sm" onclick="window.openItemEditor({ type: 'experience', mode: 'add' })">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Experience
+          </button>
+        </div>
+      </div>
+
+      <div class="timeline" id="timeline-container">
+        <!-- Rendered by app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Certifications Section -->
+  <section id="certifications">
+    <div class="container">
+      <div class="section-header-row">
+        <div class="section-header">
+          <span class="section-tag">VERIFIED CREDENTIALS</span>
+          <h2 class="section-title">Certifications & Badges</h2>
+          <p class="section-subtitle">Industry accredited certifications in cloud architecture, container orchestration, and security.</p>
+        </div>
+        <div class="section-action-buttons">
+          <button class="btn btn-primary btn-sm" onclick="window.openItemEditor({ type: 'certification', mode: 'add' })">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Certification
+          </button>
+        </div>
+      </div>
+
+      <div class="cert-grid" id="cert-grid">
+        <!-- Rendered by app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Resume Section -->
+  <section id="resume">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">CURRICULUM VITAE</span>
+        <h2 class="section-title">Interactive Resume Viewer</h2>
+        <p class="section-subtitle">Preview executive summary and technical credentials or download a print-ready version.</p>
+      </div>
+
+      <div class="resume-box">
+        <div class="resume-header-bar">
+          <div>
+            <h3 style="font-family: var(--font-heading); font-weight: 700; font-size: 1.2rem;">Official Engineering Resume</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Preview credentials or upload & download your custom PDF document</p>
+          </div>
+          <div class="resume-actions-group" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button onclick="window.viewResumePdf()" class="btn btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;" title="View uploaded PDF in new tab">
+              👁️ View PDF
+            </button>
+            <button onclick="window.downloadResumePdf()" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;" title="Download PDF document">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Download PDF
+            </button>
+            <button onclick="window.openCustomizer('drawer-tab-resume')" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;" title="Upload or change PDF">
+              📤 Upload PDF
+            </button>
+            <button onclick="window.print()" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;" title="Print clean 1-page resume sheet">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              Print Clean Sheet
+            </button>
+          </div>
+        </div>
+
+        <div id="resume-preview-content">
+          <!-- Rendered by app.js -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">GET IN TOUCH</span>
+        <h2 class="section-title">Let's Connect</h2>
+        <p class="section-subtitle">Have an opportunity, collaboration idea, or question? Send a message directly.</p>
+      </div>
+
+      <div class="contact-grid">
+        <div class="contact-info-card">
+          <div class="info-item">
+            <div class="info-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </div>
+            <div class="info-text">
+              <label>Direct Email</label>
+              <p id="contact-email-val">alex.mercer.dev@example.com</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            </div>
+            <div class="info-text">
+              <label>Phone / Signal</label>
+              <p id="contact-phone-val">+1 (555) 019-2834</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            </div>
+            <div class="info-text">
+              <label>Location</label>
+              <p id="contact-loc-val">San Francisco, CA</p>
+            </div>
+          </div>
+
+          <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+            <label style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.75rem;">Color Accent Customizer</label>
+            <div style="display: flex; gap: 0.75rem;">
+              <span class="accent-dot" data-accent-val="blue" style="width: 24px; height: 24px; border-radius: 50%; background: #3b82f6; cursor: pointer;" title="Tech Blue"></span>
+              <span class="accent-dot" data-accent-val="emerald" style="width: 24px; height: 24px; border-radius: 50%; background: #10b981; cursor: pointer;" title="Cyber Emerald"></span>
+              <span class="accent-dot" data-accent-val="purple" style="width: 24px; height: 24px; border-radius: 50%; background: #8b5cf6; cursor: pointer;" title="Electric Purple"></span>
+              <span class="accent-dot" data-accent-val="gold" style="width: 24px; height: 24px; border-radius: 50%; background: #f59e0b; cursor: pointer;" title="Sunset Gold"></span>
+            </div>
+          </div>
+        </div>
+
+        <form class="contact-form" id="contact-form">
+          <div class="form-group">
+            <label for="contact-name">Your Full Name</label>
+            <input type="text" id="contact-name" class="form-control" placeholder="e.g. Sarah Jenkins" required />
+          </div>
+
+          <div class="form-group">
+            <label for="contact-email">Email Address</label>
+            <input type="email" id="contact-email" class="form-control" placeholder="name@company.com" required />
+          </div>
+
+          <div class="form-group">
+            <label for="contact-msg">Message</label>
+            <textarea id="contact-msg" class="form-control" placeholder="Tell me about your project, open position, or idea..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.9rem;">
+            Send Message 🚀
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p id="footer-copyright">© 2026 Developer Portfolio. Engineered with HTML5, Vanilla CSS & Modern JavaScript.</p>
+    </div>
+  </footer>
+
+  <!-- Project Detail Modal -->
+  <div class="modal-backdrop" id="project-modal">
+    <div class="modal-box">
+      <button class="modal-close-btn" aria-label="Close modal">&times;</button>
+      <div id="project-modal-content">
+        <!-- Loaded dynamically by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Unified Item Editor Modal (Add/Edit Skill, Project, Experience, Certification) -->
+  <div class="modal-backdrop" id="item-editor-modal">
+    <div class="modal-box item-modal-box">
+      <button class="modal-close-btn" aria-label="Close modal">&times;</button>
+      <h3 id="item-editor-title" style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700; margin-bottom: 1.25rem;">Add New Item</h3>
+      <form id="item-editor-form" style="display: flex; flex-direction: column; gap: 1rem;">
+        <!-- Injected dynamically by customizer.js -->
+      </form>
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <button type="button" id="cancel-item-editor-btn" class="btn btn-secondary">Cancel</button>
+        <button type="submit" form="item-editor-form" class="btn btn-primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unified Portfolio Settings & Live Customizer Drawer -->
+  <div class="customizer-drawer" id="customizer-drawer">
+    <div class="drawer-header">
+      <div>
+        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700;">Portfolio Content & Settings</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">Manage your information, skills, projects, and data</p>
+      </div>
+      <button id="close-customizer-btn" class="modal-close-btn" style="position: static;">&times;</button>
+    </div>
+
+    <!-- Drawer Navigation Tabs -->
+    <div class="drawer-tabs">
+      <button class="drawer-tab-btn active" data-tab-target="drawer-tab-profile" onclick="window.switchDrawerTab('drawer-tab-profile')">👤 Profile</button>
+      <button class="drawer-tab-btn" data-tab-target="drawer-tab-resume" onclick="window.switchDrawerTab('drawer-tab-resume')">📄 Resume</button>
+      <button class="drawer-tab-btn" data-tab-target="drawer-tab-skills" onclick="window.switchDrawerTab('drawer-tab-skills')">🛠️ Skills</button>
+      <button class="drawer-tab-btn" data-tab-target="drawer-tab-projects" onclick="window.switchDrawerTab('drawer-tab-projects')">🚀 Projects</button>
+      <button class="drawer-tab-btn" data-tab-target="drawer-tab-experience" onclick="window.switchDrawerTab('drawer-tab-experience')">💼 Experience</button>
+      <button class="drawer-tab-btn" data-tab-target="drawer-tab-certifications" onclick="window.switchDrawerTab('drawer-tab-certifications')">📜 Certs</button>
+      <button class="drawer-tab-btn" data-tab-target="drawer-tab-data" onclick="window.switchDrawerTab('drawer-tab-data')">⚙️ Backup</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- 1. Profile Tab -->
+      <div class="drawer-tab-pane active" id="drawer-tab-profile">
+        <form id="customizer-profile-form" style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Profile Picture Upload Zone -->
+          <div class="form-group">
+            <label>Profile Avatar</label>
+            <div class="image-upload-zone" onclick="document.getElementById('cust-avatar-file').click()">
+              <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%231e293b'/%3E%3C/svg%3E" id="cust-avatar-preview" class="upload-preview-thumb" alt="Avatar Preview" />
+              <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent-primary);">📁 Choose Profile Photo File</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">PNG, JPG, WebP, SVG</div>
+              <input type="file" id="cust-avatar-file" accept="image/*" style="display: none;" />
+            </div>
+            <input type="text" id="cust-avatar-url" class="form-control" style="margin-top: 0.5rem;" placeholder="Or paste image URL (https://...)" />
+          </div>
+
+          <div class="form-group">
+            <label for="cust-name">Full Name *</label>
+            <input type="text" id="cust-name" class="form-control" required />
+          </div>
+
+          <div class="form-group">
+            <label for="cust-title">Professional Title *</label>
+            <input type="text" id="cust-title" class="form-control" required />
+          </div>
+
+          <div class="form-group">
+            <label for="cust-location">Location</label>
+            <input type="text" id="cust-location" class="form-control" />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label for="cust-email">Contact Email</label>
+              <input type="email" id="cust-email" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label for="cust-phone">Phone / Signal</label>
+              <input type="text" id="cust-phone" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="cust-availability">Availability Status</label>
+            <input type="text" id="cust-availability" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="cust-bio">Bio / Summary *</label>
+            <textarea id="cust-bio" class="form-control" rows="3" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="cust-github">GitHub Profile URL</label>
+            <input type="url" id="cust-github" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="cust-linkedin">LinkedIn Profile URL</label>
+            <input type="url" id="cust-linkedin" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="cust-twitter">Twitter / X URL</label>
+            <input type="url" id="cust-twitter" class="form-control" />
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; margin-top: 0.5rem;">
+            💾 Save Profile Details
+          </button>
+        </form>
+      </div>
+
+      <!-- 2. Resume & PDF Document Tab -->
+      <div class="drawer-tab-pane" id="drawer-tab-resume">
+        <form id="customizer-resume-form" style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Resume PDF Upload Zone -->
+          <div class="form-group">
+            <label style="font-weight: 700;">Upload Your Official Resume (.PDF)</label>
+            <div class="image-upload-zone" onclick="document.getElementById('cust-resume-file').click()" style="padding: 1.5rem 1rem;">
+              <div style="font-size: 2rem; margin-bottom: 0.25rem;">📄</div>
+              <div style="font-size: 0.9rem; font-weight: 700; color: var(--accent-primary);">Click to Choose PDF File</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Accepts .PDF documents (up to 8MB)</div>
+              <input type="file" id="cust-resume-file" accept=".pdf,application/pdf" style="display: none;" />
+            </div>
+            <div id="cust-uploaded-pdf-info"></div>
+            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+              <button type="button" id="cust-remove-pdf-btn" class="btn btn-secondary btn-sm" style="color: #ef4444; display: none;">
+                🗑️ Remove Uploaded PDF
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="cust-resume-url">Or External PDF Link / Google Drive URL</label>
+            <input type="url" id="cust-resume-url" class="form-control" placeholder="https://drive.google.com/..." />
+          </div>
+
+          <div class="form-group">
+            <label for="cust-resume-summary">Resume Executive Summary</label>
+            <textarea id="cust-resume-summary" class="form-control" rows="3" placeholder="Executive summary for resume..."></textarea>
+          </div>
+
+          <div style="margin-top: 0.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <h4 style="font-size: 0.9rem; font-weight: 700;">Education & Degrees</h4>
+              <button type="button" class="btn btn-primary btn-sm" onclick="window.openItemEditor({ type: 'education', mode: 'add' })">
+                + Add Education
+              </button>
+            </div>
+            <div id="drawer-education-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; margin-top: 0.5rem;">
+            💾 Save Resume Settings
+          </button>
+        </form>
+      </div>
+
+      <!-- 3. Skills Tab -->
+      <div class="drawer-tab-pane" id="drawer-tab-skills">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 700;">Manage Skills</h4>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.openItemEditor({ type: 'skill', mode: 'add' })">
+            + Add Skill
+          </button>
+        </div>
+        <div id="drawer-skills-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <!-- Loaded dynamically -->
+        </div>
+      </div>
+
+      <!-- 3. Projects Tab -->
+      <div class="drawer-tab-pane" id="drawer-tab-projects">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 700;">Manage Projects</h4>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.openItemEditor({ type: 'project', mode: 'add' })">
+            + Add Project
+          </button>
+        </div>
+        <div id="drawer-projects-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <!-- Loaded dynamically -->
+        </div>
+      </div>
+
+      <!-- 4. Experience Tab -->
+      <div class="drawer-tab-pane" id="drawer-tab-experience">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 700;">Work Experience</h4>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.openItemEditor({ type: 'experience', mode: 'add' })">
+            + Add Experience
+          </button>
+        </div>
+        <div id="drawer-experience-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <!-- Loaded dynamically -->
+        </div>
+      </div>
+
+      <!-- 5. Certifications Tab -->
+      <div class="drawer-tab-pane" id="drawer-tab-certifications">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 700;">Certifications</h4>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.openItemEditor({ type: 'certification', mode: 'add' })">
+            + Add Cert
+          </button>
+        </div>
+        <div id="drawer-certifications-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <!-- Loaded dynamically -->
+        </div>
+      </div>
+
+      <!-- 6. Data Management & Backup Tab -->
+      <div class="drawer-tab-pane" id="drawer-tab-data">
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <div class="settings-card">
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.3rem;">Start Fresh / Clear Demo Data</h4>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Remove all sample projects, skills, experience, and certifications to add your own from scratch.
+            </p>
+            <button id="cust-clear-demo-btn" class="btn btn-secondary" style="width: 100%; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+              🗑️ Clear All Demo Data
+            </button>
+          </div>
+
+          <div class="settings-card">
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.3rem;">Export & Backup</h4>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Download a complete <code>data.js</code> file to save your portfolio data permanently to your project directory.
+            </p>
+            <button id="cust-export-btn" class="btn btn-primary" style="width: 100%;">
+              📥 Download data.js Backup
+            </button>
+          </div>
+
+          <div class="settings-card">
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.3rem;">Import Existing Data</h4>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Restore your portfolio from a previously exported <code>data.js</code> or JSON file.
+            </p>
+            <button class="btn btn-secondary" style="width: 100%;" onclick="document.getElementById('cust-import-file').click()">
+              📤 Upload & Import File
+            </button>
+            <input type="file" id="cust-import-file" accept=".js,.json" style="display: none;" />
+          </div>
+
+          <div class="settings-card">
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.3rem;">Restore Sample Data</h4>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Reset everything back to the original sample dataset.
+            </p>
+            <button id="cust-reset-btn" class="btn btn-secondary" style="width: 100%;">
+              ⚡ Restore Sample Demo Data
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Scripts -->
+  <script src="js/data.js?v=6"></script>
+  <script src="js/canvas-bg.js?v=6"></script>
+  <script src="js/customizer.js?v=6"></script>
+  <script src="js/app.js?v=6"></script>
+</body>
+</html>
