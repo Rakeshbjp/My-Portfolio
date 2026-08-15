@@ -858,20 +858,76 @@
         education: []
       };
 
+      if (!rawText || rawText.trim().length === 0) {
+        return parsed;
+      }
+
+      // 1. Text Normalization:
+      // Replace non-breaking spaces and zero-width spaces
       const cleanText = (rawText || '')
         .replace(/\u00A0/g, ' ')
         .replace(/[\u200B-\u200D\uFEFF]/g, '')
         .replace(/\r\n/g, '\n');
 
-      const lines = cleanText.split('\n').map(l => l.trim()).filter(Boolean);
-      const lower = cleanText.toLowerCase();
+      const rawLines = cleanText.split('\n').map(l => l.trim()).filter(Boolean);
+      const normalizedLines = rawLines.map(line => {
+        // Fix spaced-out words e.g. "T E C H N I C A L   S K I L L S" or "S  U  M  M  A  R  Y"
+        if (/^(?:[A-Za-z0-9]\s+){3,}[A-Za-z0-9]$/.test(line)) {
+          return line.replace(/\s+/g, '');
+        }
+        return line;
+      });
+
+      const fullCleanText = normalizedLines.join('\n');
+      const lowerFull = fullCleanText.toLowerCase();
+
+      // 2. Multi-Section State Machine Segmentation
+      const sectionKeywords = [
+        { type: 'SUMMARY', regex: /^(?:(?:EXECUTIVE|PROFESSIONAL|CAREER)?\s*(?:SUMMARY|OBJECTIVE|PROFILE|ABOUT(?:\s+ME)?))[:\s-]*$/i },
+        { type: 'SKILLS', regex: /^(?:(?:TECHNICAL|CORE|KEY|PROFESSIONAL|AREAS\s+OF)?\s*(?:SKILLS|COMPETENCIES|TECHNOLOGIES|TOOLKIT|STACK))[:\s-]*$/i },
+        { type: 'PROJECTS', regex: /^(?:(?:ACADEMIC|PERSONAL|KEY|FEATURED|SELECTED)?\s*(?:PROJECTS|PORTFOLIO\s+PROJECTS))[:\s-]*$/i },
+        { type: 'EXPERIENCE', regex: /^(?:(?:WORK|PROFESSIONAL|EMPLOYMENT|RELEVANT)?\s*(?:EXPERIENCE|HISTORY|INTERNSHIPS?))[:\s-]*$/i },
+        { type: 'EDUCATION', regex: /^(?:(?:ACADEMIC|EDUCATIONAL)?\s*(?:EDUCATION|BACKGROUND|QUALIFICATIONS|ACADEMICS))[:\s-]*$/i },
+        { type: 'CERTIFICATIONS', regex: /^(?:(?:LICENSES\s+&|ACCREDITATIONS|COURSES\s+&)?\s*(?:CERTIFICATIONS|CERTIFICATES|ACCREDITATIONS|ACHIEVEMENTS))[:\s-]*$/i }
+      ];
+
+      const sections = {
+        HEADER: [],
+        SUMMARY: [],
+        SKILLS: [],
+        PROJECTS: [],
+        EXPERIENCE: [],
+        EDUCATION: [],
+        CERTIFICATIONS: [],
+        OTHER: []
+      };
+
+      let currentSection = 'HEADER';
+
+      for (let i = 0; i < normalizedLines.length; i++) {
+        const line = normalizedLines[i];
+        let matchedType = null;
+
+        for (const sec of sectionKeywords) {
+          if (sec.regex.test(line) || (line.length < 35 && line.toUpperCase() === line && sec.regex.test(line.replace(/[^A-Z\s]/g, '')))) {
+            matchedType = sec.type;
+            break;
+          }
+        }
+
+        if (matchedType) {
+          currentSection = matchedType;
+        } else {
+          sections[currentSection].push(line);
+        }
+      }
 
       // ==========================================
-      // 1. Personal & Contact Information
+      // Section A: Parse Personal & Contact from HEADER & Full Text
       // ==========================================
       // Email
-      const emailMatch = cleanText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/) ||
-        cleanText.match(/([a-zA-Z0-9._%+-]+(?:\s+[a-zA-Z0-9._%+-]+)*)\s*@\s*([a-zA-Z0-9.-]+(?:\s+[a-zA-Z0-9.-]+)*)\s*\.\s*([a-zA-Z]{2,})/);
+      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+      const emailMatch = fullCleanText.match(emailRegex) || fullCleanText.match(/([a-zA-Z0-9._%+-]+(?:\s+[a-zA-Z0-9._%+-]+)*)\s*@\s*([a-zA-Z0-9.-]+(?:\s+[a-zA-Z0-9.-]+)*)\s*\.\s*([a-zA-Z]{2,})/);
       if (emailMatch) {
         parsed.personal.email = emailMatch[0].replace(/\s+/g, '');
       } else {
@@ -879,7 +935,7 @@
       }
 
       // Phone
-      const phoneMatch = cleanText.match(/(?:\+91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}|(?:\+91[\s-]?)?[6-9]\d{9}|\+?1?[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}|\(\+91\)\s*\d{10}/);
+      const phoneMatch = fullCleanText.match(/(?:\+91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}|(?:\+91[\s-]?)?[6-9]\d{9}|\+?1?[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}|\(\+91\)\s*\d{10}/);
       if (phoneMatch) {
         parsed.personal.phone = phoneMatch[0].trim();
       } else {
@@ -887,35 +943,33 @@
       }
 
       // GitHub
-      const ghMatch = cleanText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9_-]+)/i) ||
-        cleanText.match(/github(?:\.com)?\s*[:/]\s*([A-Za-z0-9_-]+)/i);
+      const ghMatch = fullCleanText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9_-]+)/i) || fullCleanText.match(/github(?:\.com)?\s*[:/]\s*([A-Za-z0-9_-]+)/i);
       if (ghMatch) {
-        const handle = ghMatch[1] || ghMatch[0];
-        parsed.personal.github = handle.startsWith('http') ? handle : `https://github.com/${handle.replace(/github\.com\/?/i, '').replace(/https?:\/\//i, '')}`;
+        const ghUser = ghMatch[1] || ghMatch[0];
+        parsed.personal.github = ghUser.startsWith('http') ? ghUser : `https://github.com/${ghUser.replace(/^https?:\/\/github\.com\/?/i, '').replace(/github\.com\/?/i, '')}`;
       } else {
         parsed.personal.github = "https://github.com/Rakeshbjp";
       }
 
       // LinkedIn
-      const liMatch = cleanText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([A-Za-z0-9_.-]+)/i) ||
-        cleanText.match(/linkedin(?:\.com\/in)?\s*[:/]\s*([A-Za-z0-9_.-]+)/i);
+      const liMatch = fullCleanText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([A-Za-z0-9_.-]+)/i) || fullCleanText.match(/linkedin(?:\.com\/in)?\s*[:/]\s*([A-Za-z0-9_.-]+)/i);
       if (liMatch) {
-        const liHandle = liMatch[1] || liMatch[0];
-        parsed.personal.linkedin = liHandle.startsWith('http') ? liHandle : `https://www.linkedin.com/in/${liHandle.replace(/linkedin\.com\/in\/?/i, '').replace(/https?:\/\//i, '')}`;
+        const liUser = liMatch[1] || liMatch[0];
+        parsed.personal.linkedin = liUser.startsWith('http') ? liUser : `https://www.linkedin.com/in/${liUser.replace(/^https?:\/\/linkedin\.com\/in\/?/i, '').replace(/linkedin\.com\/in\/?/i, '')}`;
       } else {
         parsed.personal.linkedin = "https://www.linkedin.com/in/srk2005/";
       }
 
       // Location
-      const locationKeywords = ['Bengaluru', 'Bangalore', 'Karnataka', 'Hyderabad', 'Chennai', 'Mumbai', 'Delhi', 'Pune', 'Noida', 'Gurgaon', 'Kolkata', 'San Francisco', 'New York', 'California', 'India', 'Remote'];
-      for (const kw of locationKeywords) {
-        if (lower.includes(kw.toLowerCase())) {
-          if (lower.includes('bengaluru') || lower.includes('bangalore')) {
+      const locationList = ['Bengaluru', 'Bangalore', 'Karnataka', 'Hyderabad', 'Chennai', 'Mumbai', 'Delhi', 'Pune', 'Noida', 'Gurgaon', 'Kolkata', 'San Francisco', 'New York', 'California', 'India', 'Remote'];
+      for (const loc of locationList) {
+        if (lowerFull.includes(loc.toLowerCase())) {
+          if (lowerFull.includes('bengaluru') || lowerFull.includes('bangalore')) {
             parsed.personal.location = 'Bengaluru, Karnataka, India';
-          } else if (lower.includes('india')) {
-            parsed.personal.location = `${kw}, India`;
+          } else if (lowerFull.includes('india')) {
+            parsed.personal.location = `${loc}, India`;
           } else {
-            parsed.personal.location = kw;
+            parsed.personal.location = loc;
           }
           break;
         }
@@ -924,110 +978,111 @@
         parsed.personal.location = "Bengaluru, Karnataka, India";
       }
 
-      // Full Name
-      if ((fileName && fileName.toLowerCase().includes('rakesh')) || lower.includes('rakesh kumar')) {
-        parsed.personal.name = 'S Rakesh Kumar';
-      } else {
-        const candidateLines = lines.slice(0, 5).filter(l => !l.includes('@') && !l.includes('http') && !l.includes('.com') && !l.match(/\+?\d{10}/));
-        if (candidateLines.length > 0) {
-          const candidate = candidateLines[0].replace(/[^a-zA-Z\s.]/g, '').trim();
-          if (candidate.length > 2 && candidate.split(/\s+/).length <= 4) {
-            parsed.personal.name = candidate;
-          }
+      // Full Name (From HEADER lines)
+      const headerLines = sections.HEADER.filter(l => !l.includes('@') && !l.includes('http') && !l.includes('.com') && !l.match(/\+?\d{10}/));
+      if (headerLines.length > 0) {
+        const candidate = headerLines[0].replace(/[^a-zA-Z\s.]/g, '').trim();
+        if (candidate.length > 2 && candidate.split(/\s+/).length <= 4 && !candidate.toLowerCase().includes('resume') && !candidate.toLowerCase().includes('curriculum')) {
+          parsed.personal.name = candidate;
         }
-        if (!parsed.personal.name) parsed.personal.name = 'S Rakesh Kumar';
+      }
+      if (!parsed.personal.name) {
+        parsed.personal.name = (fileName && fileName.toLowerCase().includes('rakesh')) || lowerFull.includes('rakesh') ? 'S Rakesh Kumar' : 'S Rakesh Kumar';
       }
 
-      // Title
-      if (lower.includes('mern stack developer')) {
+      // Professional Title
+      if (lowerFull.includes('mern stack developer')) {
         parsed.personal.title = 'MERN Stack Developer';
-      } else if (lower.includes('full stack developer')) {
+      } else if (lowerFull.includes('full stack developer')) {
         parsed.personal.title = 'Full Stack Developer';
-      } else if (lower.includes('frontend developer') || lower.includes('front end developer')) {
+      } else if (lowerFull.includes('frontend developer') || lowerFull.includes('front end developer')) {
         parsed.personal.title = 'Frontend Developer';
-      } else if (lower.includes('backend developer') || lower.includes('back end developer')) {
+      } else if (lowerFull.includes('backend developer') || lowerFull.includes('back end developer')) {
         parsed.personal.title = 'Backend Developer';
-      } else if (lower.includes('software engineer')) {
+      } else if (lowerFull.includes('software engineer')) {
         parsed.personal.title = 'Software Engineer';
-      } else if (lower.includes('software developer')) {
+      } else if (lowerFull.includes('software developer')) {
         parsed.personal.title = 'Software Developer';
       } else {
         parsed.personal.title = 'Developer';
       }
 
-      // Executive Summary / Bio
-      const summaryMatch = cleanText.match(/(?:EXECUTIVE\s+SUMMARY|PROFESSIONAL\s+SUMMARY|SUMMARY|CAREER\s+OBJECTIVE|OBJECTIVE|ABOUT\s+ME)[\s\S]*?(?:TECHNICAL\s+SKILLS|SKILLS|CORE\s+COMPETENCIES|EXPERIENCE|WORK\s+EXPERIENCE|PROJECTS|EDUCATION|CERTIFICATIONS)/i);
-      if (summaryMatch) {
-        let summaryText = summaryMatch[0]
-          .replace(/^(?:EXECUTIVE\s+SUMMARY|PROFESSIONAL\s+SUMMARY|SUMMARY|CAREER\s+OBJECTIVE|OBJECTIVE|ABOUT\s+ME)[:\s-]*/i, '')
-          .replace(/(?:TECHNICAL\s+SKILLS|SKILLS|CORE\s+COMPETENCIES|EXPERIENCE|WORK\s+EXPERIENCE|PROJECTS|EDUCATION|CERTIFICATIONS)$/i, '')
-          .trim();
-        if (summaryText.length > 30) {
-          parsed.personal.bio = summaryText;
-          parsed.personal.tagline = summaryText.length > 120 ? summaryText.slice(0, 117) + '...' : summaryText;
-        }
-      }
-
-      if (!parsed.personal.bio) {
+      // ==========================================
+      // Section B: Parse Summary / Bio
+      // ==========================================
+      if (sections.SUMMARY.length > 0) {
+        parsed.personal.bio = sections.SUMMARY.join(' ').trim();
+        parsed.personal.tagline = parsed.personal.bio.length > 120 ? parsed.personal.bio.slice(0, 117) + '...' : parsed.personal.bio;
+      } else {
         parsed.personal.bio = "Computer Science Engineering graduate and aspiring MERN Stack Developer with hands-on project experience using MongoDB, Express.js, React.js, Node.js, JavaScript, HTML, CSS, and REST APIs. Possess a basic understanding of full-stack web development, frontend and backend integration, database operations, authentication, and API development. Built academic and personal projects with practical exposure to the MERN stack and modern development tools. Quick learner with strong problem-solving skills and a willingness to learn and contribute in a collaborative development environment.";
         parsed.personal.tagline = "Computer Science graduate and aspiring MERN Stack Developer ready to build scalable web apps.";
       }
 
       // ==========================================
-      // 2. Technical Skills Extraction
+      // Section C: Parse Skills
       // ==========================================
-      const techTaxonomy = [
-        {
-          category: 'Frontend Development',
-          keywords: ['React.js', 'React', 'HTML5', 'HTML', 'CSS3', 'CSS', 'JavaScript', 'TypeScript', 'Tailwind CSS', 'Bootstrap', 'Redux', 'Responsive Web Design', 'DOM Manipulation']
-        },
-        {
-          category: 'Backend Development',
-          keywords: ['Node.js', 'Express.js', 'RESTful APIs', 'REST APIs', 'JWT', 'Authentication', 'API Integration', 'Middleware', 'MERN Stack']
-        },
-        {
-          category: 'Databases & Storage',
-          keywords: ['MongoDB', 'Mongoose', 'MySQL', 'PostgreSQL', 'Redis', 'Database Design', 'CRUD Operations']
-        },
-        {
-          category: 'Programming Languages',
-          keywords: ['JavaScript (ES6+)', 'JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'C', 'SQL']
-        },
-        {
-          category: 'Developer Tools & Cloud',
-          keywords: ['Git', 'GitHub', 'Postman', 'VS Code', 'Docker', 'Vercel', 'Netlify', 'npm', 'Linux']
-        },
-        {
-          category: 'Core Concepts',
-          keywords: ['Data Structures & Algorithms (DSA)', 'Object-Oriented Programming (OOPs)', 'DBMS', 'Operating Systems', 'Computer Networks']
-        }
-      ];
-
-      for (const group of techTaxonomy) {
-        const found = [];
-        for (const kw of group.keywords) {
-          const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const regex = new RegExp(`\\b${escaped}\\b`, 'i');
-          if (cleanText.match(regex)) {
-            if (!found.some(f => f.toLowerCase() === kw.toLowerCase() || (f.startsWith(kw) && f.includes('.')))) {
-              found.push(kw);
+      const skillCategoryDict = {};
+      if (sections.SKILLS.length > 0) {
+        for (const sline of sections.SKILLS) {
+          if (sline.includes(':')) {
+            const parts = sline.split(':');
+            const cat = parts[0].replace(/[^a-zA-Z0-9\s&]/g, '').trim();
+            const items = parts[1].split(/[,|•/]/).map(x => x.trim()).filter(x => x.length > 1);
+            if (cat && items.length > 0) {
+              skillCategoryDict[cat] = (skillCategoryDict[cat] || []).concat(items);
             }
           }
         }
-        if (found.length > 0) {
+      }
+
+      if (Object.keys(skillCategoryDict).length > 0) {
+        for (const [catName, skillItems] of Object.entries(skillCategoryDict)) {
+          const uniqueSkills = [...new Set(skillItems)];
           parsed.skills.push({
-            category: group.category,
-            items: found.map(name => ({
+            category: catName,
+            items: uniqueSkills.map(name => ({
               name,
               proficiency: 90,
               level: 'Proficient'
             }))
           });
         }
+      } else {
+        const taxonomy = [
+          { category: 'Frontend Development', keywords: ['React.js', 'React', 'HTML5', 'HTML', 'CSS3', 'CSS', 'JavaScript', 'TypeScript', 'Tailwind CSS', 'Bootstrap', 'Redux', 'Responsive UI Design', 'DOM Manipulation'] },
+          { category: 'Backend Development', keywords: ['Node.js', 'Express.js', 'RESTful APIs', 'REST APIs', 'JWT', 'Authentication', 'API Integration', 'Middleware', 'MERN Stack'] },
+          { category: 'Databases & Storage', keywords: ['MongoDB', 'Mongoose', 'MySQL', 'PostgreSQL', 'Redis', 'Database Design', 'CRUD Operations'] },
+          { category: 'Programming Languages', keywords: ['JavaScript (ES6+)', 'JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'C', 'SQL'] },
+          { category: 'Developer Tools & Cloud', keywords: ['Git', 'GitHub', 'Postman', 'VS Code', 'Docker', 'Vercel', 'Netlify', 'npm', 'Linux'] },
+          { category: 'Core Concepts', keywords: ['Data Structures & Algorithms (DSA)', 'Object-Oriented Programming (OOPs)', 'DBMS', 'Operating Systems', 'Computer Networks'] }
+        ];
+
+        for (const group of taxonomy) {
+          const matched = [];
+          for (const kw of group.keywords) {
+            const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+            if (fullCleanText.match(regex)) {
+              if (!matched.some(m => m.toLowerCase() === kw.toLowerCase())) {
+                matched.push(kw);
+              }
+            }
+          }
+          if (matched.length > 0) {
+            parsed.skills.push({
+              category: group.category,
+              items: matched.map(name => ({
+                name,
+                proficiency: 90,
+                level: 'Proficient'
+              }))
+            });
+          }
+        }
       }
 
-      // Ensure rich default skills if MERN stack is detected
-      if (parsed.skills.length === 0 || lower.includes('mern') || lower.includes('mongodb')) {
+      // Default skills fallback
+      if (parsed.skills.length === 0 || lowerFull.includes('mern') || lowerFull.includes('mongodb')) {
         parsed.skills = [
           {
             category: 'Frontend Development',
@@ -1073,73 +1128,161 @@
       }
 
       // ==========================================
-      // 3. Projects Extraction
+      // Section D: Parse Projects
       // ==========================================
-      if (lower.includes('ink attendance') || lower.includes('attendance') || lower.includes('mern')) {
-        parsed.projects.push({
-          id: 'project-ink-attendance',
-          title: 'INK Attendance',
-          category: 'Full Stack MERN',
-          featured: true,
-          image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
-          summary: 'Full-stack automated attendance tracking and employee management system with real-time verification, dashboard analytics, and secure REST APIs.',
-          description: 'INK Attendance is an end-to-end full-stack web application developed with the MERN stack (MongoDB, Express.js, React.js, Node.js). It provides automated daily attendance logging, role-based authorization, reporting analytics, and REST API integration.',
-          techStack: ['MongoDB', 'Express.js', 'React.js', 'Node.js', 'REST APIs', 'Tailwind CSS'],
-          metrics: [
-            'Automated attendance logging with sub-second response times',
-            'Role-based authentication & JWT token session security',
-            'Interactive analytics dashboard for admin reporting'
-          ],
-          architecture: [
-            'React.js single-page frontend with responsive component state management',
-            'Express.js & Node.js REST API handling authentication & CRUD endpoints',
-            'MongoDB database with Mongoose schemas for scalable record storage'
-          ],
-          demoUrl: '#',
-          githubUrl: parsed.personal.github || 'https://github.com/Rakeshbjp'
-        });
-      }
+      if (sections.PROJECTS.length > 0) {
+        const projBlocks = [];
+        let curBlock = [];
+        for (const pline of sections.PROJECTS) {
+          if (pline.startsWith('•') || pline.startsWith('-') || pline.startsWith('*')) {
+            curBlock.push(pline);
+          } else {
+            if (curBlock.length > 0 && curBlock.some(x => x.startsWith('•') || x.startsWith('-'))) {
+              projBlocks.push(curBlock);
+              curBlock = [pline];
+            } else {
+              curBlock.push(pline);
+            }
+          }
+        }
+        if (curBlock.length > 0) projBlocks.push(curBlock);
 
-      // ==========================================
-      // 4. Experience / Internships Extraction
-      // ==========================================
-      const expMatch = cleanText.match(/(?:WORK\s+EXPERIENCE|EXPERIENCE|EMPLOYMENT\s+HISTORY|INTERNSHIPS)[\s\S]*?(?:PROJECTS|EDUCATION|CERTIFICATIONS|SKILLS|TECHNICAL\s+SKILLS|ACHIEVEMENTS|$)/i);
-      if (expMatch) {
-        const rawExp = expMatch[0]
-          .replace(/^(?:WORK\s+EXPERIENCE|EXPERIENCE|EMPLOYMENT\s+HISTORY|INTERNSHIPS)[:\s-]*/i, '')
-          .replace(/(?:PROJECTS|EDUCATION|CERTIFICATIONS|SKILLS|TECHNICAL\s+SKILLS|ACHIEVEMENTS)$/i, '')
-          .trim();
+        projBlocks.forEach((bLines, idx) => {
+          const titleLine = bLines[0].replace(/^[•\-\d.]\s*/, '').trim();
+          const cleanTitle = titleLine.split(/[\(|–\-:]/)[0].trim();
+          if (cleanTitle && cleanTitle.length > 2) {
+            const bulletLines = bLines.slice(1).map(l => l.replace(/^[•\-*]\s*/, '').trim()).filter(Boolean);
+            const desc = bulletLines.length > 0 ? bulletLines.join(' ') : bLines.slice(1).join(' ') || titleLine;
 
-        const expBlocks = rawExp.split(/\n\s*\n/).filter(b => b.trim().length > 10);
-        expBlocks.forEach((block, idx) => {
-          const elines = block.split('\n').map(l => l.trim()).filter(Boolean);
-          if (elines.length > 0) {
-            const firstLine = elines[0].replace(/^[•\-\d.]\s*/, '').trim();
-            const parts = firstLine.split(/[|–\-,]/);
-            const role = parts[0] ? parts[0].trim() : 'Software Developer';
-            const company = parts[1] ? parts[1].trim() : (elines[1] || 'Tech Organization');
+            let techStack = [];
+            const techMatch = bLines.join(' ').match(/(?:Tech\s*Stack|Technologies|Tools\s*Used)[:\s-]*([^\n.]+)/i) || titleLine.match(/\(([^)]+)\)/);
+            if (techMatch) {
+              techStack = techMatch[1].split(/[,|/]/).map(t => t.trim()).filter(Boolean);
+            } else {
+              ['MongoDB', 'Express.js', 'React.js', 'Node.js', 'JavaScript', 'HTML5', 'CSS3', 'Tailwind CSS', 'REST API', 'MySQL'].forEach(t => {
+                if (bLines.join(' ').toLowerCase().includes(t.toLowerCase())) techStack.push(t);
+              });
+            }
 
-            const dateMatch = block.match(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|[0-9]{4})\s*[\w\s–-]+(?:Present|[0-9]{4})/i);
-            const period = dateMatch ? dateMatch[0].trim() : '2023 - Present';
-
-            const bullets = elines.slice(1).filter(l => l.startsWith('•') || l.startsWith('-') || l.length > 20).map(l => l.replace(/^[•\-*]\s*/, '').trim());
-
-            parsed.experience.push({
-              role,
-              company,
-              location: parsed.personal.location || 'Bengaluru, India',
-              period,
-              logo: company.slice(0, 3).toUpperCase(),
-              highlights: bullets.length > 0 ? bullets : [elines.slice(1).join(' ') || 'Developed web applications and handled full stack integration.']
+            parsed.projects.push({
+              id: `project-${Date.now()}-${idx}`,
+              title: cleanTitle,
+              category: techStack.includes('React.js') || techStack.includes('Node.js') || techStack.includes('Express.js') ? 'Full Stack MERN' : 'Web Application',
+              featured: parsed.projects.length < 2,
+              image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+              summary: desc.length > 180 ? desc.slice(0, 177) + '...' : desc,
+              description: desc,
+              techStack: techStack.length > 0 ? techStack : ['MongoDB', 'Express.js', 'React.js', 'Node.js', 'REST APIs'],
+              metrics: [
+                "Engineered modular frontend and backend architecture",
+                "Secured REST APIs with token authorization & schema validation",
+                "Delivered responsive mobile-first user interfaces"
+              ],
+              architecture: bulletLines.length > 0 ? bulletLines : [desc],
+              demoUrl: "#",
+              githubUrl: parsed.personal.github || "https://github.com/Rakeshbjp"
             });
           }
         });
       }
 
+      if (parsed.projects.length === 0 || lowerFull.includes('ink attendance') || lowerFull.includes('attendance')) {
+        if (!parsed.projects.some(p => p.title.toLowerCase().includes('ink attendance'))) {
+          parsed.projects.unshift({
+            id: 'project-ink-attendance',
+            title: 'INK Attendance',
+            category: 'Full Stack MERN',
+            featured: true,
+            image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
+            summary: 'Full-stack automated attendance tracking and employee management system with real-time verification, dashboard analytics, and secure REST APIs.',
+            description: 'INK Attendance is an end-to-end full-stack web application developed with the MERN stack (MongoDB, Express.js, React.js, Node.js). It provides automated daily attendance logging, role-based authorization, reporting analytics, and REST API integration.',
+            techStack: ['MongoDB', 'Express.js', 'React.js', 'Node.js', 'REST APIs', 'Tailwind CSS'],
+            metrics: [
+              'Automated attendance logging with sub-second response times',
+              'Role-based authentication & JWT token session security',
+              'Interactive analytics dashboard for admin reporting'
+            ],
+            architecture: [
+              'React.js single-page frontend with responsive component state management',
+              'Express.js & Node.js REST API handling authentication & CRUD endpoints',
+              'MongoDB database with Mongoose schemas for scalable record storage'
+            ],
+            demoUrl: '#',
+            githubUrl: parsed.personal.github || 'https://github.com/Rakeshbjp'
+          });
+        }
+      }
+
       // ==========================================
-      // 5. Education Extraction
+      // Section E: Parse Experience / Internships
       // ==========================================
-      if (lower.includes('computer science') || lower.includes('engineering') || lower.includes('bachelor') || lower.includes('b.e')) {
+      if (sections.EXPERIENCE.length > 0) {
+        const expBlocks = [];
+        let curExp = [];
+        for (const eline of sections.EXPERIENCE) {
+          if (eline.startsWith('•') || eline.startsWith('-')) {
+            curExp.push(eline);
+          } else {
+            if (curExp.length > 0 && curExp.some(x => x.startsWith('•') || x.startsWith('-'))) {
+              expBlocks.push(curExp);
+              curExp = [eline];
+            } else {
+              curExp.push(eline);
+            }
+          }
+        }
+        if (curExp.length > 0) expBlocks.push(curExp);
+
+        expBlocks.forEach((bLines, idx) => {
+          const headerLine = bLines[0].replace(/^[•\-\d.]\s*/, '').trim();
+          const parts = headerLine.split(/[|–\-,]/);
+          const role = parts[0] ? parts[0].trim() : 'Software Developer';
+          const company = parts[1] ? parts[1].trim() : (bLines[1] || 'Tech Organization');
+
+          const dateMatch = bLines.join(' ').match(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|[0-9]{4})\s*[\w\s–-]+(?:Present|[0-9]{4})/i);
+          const period = dateMatch ? dateMatch[0].trim() : '2023 - Present';
+
+          const bullets = bLines.slice(1).map(l => l.replace(/^[•\-*]\s*/, '').trim()).filter(Boolean);
+
+          parsed.experience.push({
+            role,
+            company,
+            location: parsed.personal.location || 'Bengaluru, India',
+            period,
+            logo: company.slice(0, 3).toUpperCase(),
+            highlights: bullets.length > 0 ? bullets : [bLines.slice(1).join(' ') || 'Built scalable applications and integrated REST APIs.']
+          });
+        });
+      }
+
+      // ==========================================
+      // Section F: Parse Education
+      // ==========================================
+      if (sections.EDUCATION.length > 0) {
+        let deg = 'Bachelor of Engineering in Computer Science & Engineering';
+        let inst = 'Visvesvaraya Technological University';
+        let yr = '2020 - 2024';
+        let det = 'Computer Science & Engineering';
+
+        for (const line of sections.EDUCATION) {
+          if (line.match(/(?:Bachelor|B\.E|B\.Tech|Degree|Master|Diploma|BCA|MCA|B\.Sc)/i)) {
+            deg = line;
+          } else if (line.match(/(?:University|Institute|College|School|Academy)/i)) {
+            inst = line;
+          } else if (line.match(/(?:20\d\d|19\d\d)/)) {
+            yr = line;
+          } else if (line.match(/(?:CGPA|Percentage|Score|Grade|Distinction)/i)) {
+            det = line;
+          }
+        }
+
+        parsed.education.push({
+          degree: deg,
+          institution: inst,
+          year: yr,
+          details: det
+        });
+      } else if (lowerFull.includes('computer science') || lowerFull.includes('engineering') || lowerFull.includes('bachelor') || lowerFull.includes('b.e')) {
         parsed.education.push({
           degree: 'Bachelor of Engineering in Computer Science & Engineering',
           institution: 'Visvesvaraya Technological University',
@@ -1149,27 +1292,23 @@
       }
 
       // ==========================================
-      // 6. Certifications Extraction
+      // Section G: Parse Certifications
       // ==========================================
-      const certMatch = cleanText.match(/(?:CERTIFICATIONS|CERTIFICATES|ACCREDITATIONS|LICENSES\s+&\s+CERTIFICATIONS)[\s\S]*?(?:EDUCATION|EXPERIENCE|PROJECTS|SKILLS|ACHIEVEMENTS|$)/i);
-      if (certMatch) {
-        const rawCert = certMatch[0]
-          .replace(/^(?:CERTIFICATIONS|CERTIFICATES|ACCREDITATIONS|LICENSES\s+&\s+CERTIFICATIONS)[:\s-]*/i, '')
-          .replace(/(?:EDUCATION|EXPERIENCE|PROJECTS|SKILLS|ACHIEVEMENTS)$/i, '')
-          .trim();
-
-        const certLines = rawCert.split('\n').map(l => l.replace(/^[•\-*]\s*/, '').trim()).filter(l => l.length > 5);
-        certLines.forEach((cline, idx) => {
-          const parts = cline.split(/[|–\-,]/);
-          const title = parts[0] ? parts[0].trim() : cline;
-          const issuer = parts[1] ? parts[1].trim() : 'Certified';
-          parsed.certifications.push({
-            title,
-            issuer,
-            issueDate: 'Verified',
-            skills: ['Full Stack', 'MERN Stack'],
-            verifyUrl: '#'
-          });
+      if (sections.CERTIFICATIONS.length > 0) {
+        sections.CERTIFICATIONS.forEach((cline, idx) => {
+          const cleanCert = cline.replace(/^[•\-*]\s*/, '').trim();
+          if (cleanCert.length > 3) {
+            const parts = cleanCert.split(/[|–\-,]/);
+            const title = parts[0] ? parts[0].trim() : cleanCert;
+            const issuer = parts[1] ? parts[1].trim() : 'Verified';
+            parsed.certifications.push({
+              title,
+              issuer,
+              issueDate: 'Verified',
+              skills: ['Full Stack', 'Web Development'],
+              verifyUrl: '#'
+            });
+          }
         });
       }
 
