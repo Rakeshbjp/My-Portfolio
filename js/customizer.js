@@ -1157,18 +1157,24 @@
       }
 
       // ==========================================
-      // Section C: Parse Skills (From SKILLS section or full document)
+      // ==========================================
+      // Section C: Parse Skills (Strictly from Resume)
       // ==========================================
       const skillCategoryDict = {};
-      const skillsSourceLines = sections.SKILLS.length > 0 ? sections.SKILLS : normalizedLines;
+      const skillsSourceLines = sections.SKILLS.length > 0 ? sections.SKILLS : [];
 
       for (const sline of skillsSourceLines) {
         if (sline.includes(':')) {
           const parts = sline.split(':');
           const cat = parts[0].replace(/[^a-zA-Z0-9\s&]/g, '').trim();
           const items = parts[1].split(/[,|•/]/).map(x => x.trim()).filter(x => x.length > 1);
-          if (cat && items.length > 0 && cat.length < 35) {
+          if (cat && items.length > 0 && cat.length < 40) {
             skillCategoryDict[cat] = (skillCategoryDict[cat] || []).concat(items);
+          }
+        } else {
+          const items = sline.split(/[,|•/]/).map(x => x.replace(/^[•\-\*▪▫–—.)\s]+/, '').trim()).filter(x => x.length > 1);
+          if (items.length > 0) {
+            skillCategoryDict['Technical Skills'] = (skillCategoryDict['Technical Skills'] || []).concat(items);
           }
         }
       }
@@ -1185,16 +1191,14 @@
             }))
           });
         }
-      }
-
-      // If categories weren't formatted with colons, run full technical taxonomy categorization
-      if (parsed.skills.length === 0) {
+      } else if (sections.SKILLS.length === 0) {
+        // Only if SKILLS section heading was not detected, scan document for present skills
         const taxonomy = [
-          { category: 'Frontend Development', keywords: ['React.js', 'React', 'HTML5', 'HTML', 'CSS3', 'CSS', 'JavaScript', 'TypeScript', 'Tailwind CSS', 'Bootstrap', 'Redux', 'Responsive UI Design', 'DOM Manipulation'] },
-          { category: 'Backend Development', keywords: ['Node.js', 'Express.js', 'RESTful APIs', 'REST APIs', 'JWT', 'Authentication', 'API Integration', 'Middleware', 'MERN Stack'] },
-          { category: 'Databases & Storage', keywords: ['MongoDB', 'Mongoose', 'MySQL', 'PostgreSQL', 'Redis', 'Database Design', 'CRUD Operations'] },
-          { category: 'Programming Languages', keywords: ['JavaScript (ES6+)', 'JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'C', 'SQL'] },
-          { category: 'Developer Tools & Cloud', keywords: ['Git', 'GitHub', 'Postman', 'VS Code', 'Docker', 'Vercel', 'Netlify', 'npm', 'Linux'] },
+          { category: 'Frontend Development', keywords: ['React.js', 'React', 'HTML5', 'HTML', 'CSS3', 'CSS', 'JavaScript', 'TypeScript', 'Tailwind CSS', 'Bootstrap', 'Redux', 'Responsive UI Design'] },
+          { category: 'Backend Development', keywords: ['Node.js', 'Express.js', 'RESTful APIs', 'REST APIs', 'JWT', 'Authentication', 'API Integration'] },
+          { category: 'Databases & Storage', keywords: ['MongoDB', 'Mongoose', 'MySQL', 'PostgreSQL', 'Redis'] },
+          { category: 'Programming Languages', keywords: ['JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'C', 'SQL'] },
+          { category: 'Developer Tools & Cloud', keywords: ['Git', 'GitHub', 'Postman', 'VS Code', 'Docker', 'Vercel'] },
           { category: 'Core Concepts', keywords: ['Data Structures & Algorithms (DSA)', 'Object-Oriented Programming (OOPs)', 'DBMS', 'Operating Systems', 'Computer Networks'] }
         ];
 
@@ -1222,101 +1226,83 @@
         }
       }
 
-      // Default skills fallback if still empty
-      if (parsed.skills.length === 0 || lowerFull.includes('mern') || lowerFull.includes('mongodb')) {
-        parsed.skills = [
-          {
-            category: 'Frontend Development',
-            items: [
-              { name: 'React.js', proficiency: 92, level: 'Proficient' },
-              { name: 'JavaScript (ES6+)', proficiency: 90, level: 'Proficient' },
-              { name: 'HTML5 & CSS3', proficiency: 95, level: 'Advanced' },
-              { name: 'Tailwind CSS', proficiency: 88, level: 'Proficient' },
-              { name: 'Bootstrap', proficiency: 85, level: 'Proficient' },
-              { name: 'Responsive UI Design', proficiency: 90, level: 'Proficient' }
-            ]
-          },
-          {
-            category: 'Backend Development',
-            items: [
-              { name: 'Node.js', proficiency: 88, level: 'Proficient' },
-              { name: 'Express.js', proficiency: 90, level: 'Proficient' },
-              { name: 'RESTful APIs', proficiency: 92, level: 'Proficient' },
-              { name: 'Authentication (JWT)', proficiency: 85, level: 'Proficient' },
-              { name: 'API Development', proficiency: 88, level: 'Proficient' }
-            ]
-          },
-          {
-            category: 'Databases',
-            items: [
-              { name: 'MongoDB', proficiency: 90, level: 'Proficient' },
-              { name: 'Mongoose ODM', proficiency: 88, level: 'Proficient' },
-              { name: 'MySQL', proficiency: 82, level: 'Proficient' },
-              { name: 'Database Operations', proficiency: 85, level: 'Proficient' }
-            ]
-          },
-          {
-            category: 'Tools & Core CS',
-            items: [
-              { name: 'Git & GitHub', proficiency: 92, level: 'Proficient' },
-              { name: 'Postman', proficiency: 90, level: 'Proficient' },
-              { name: 'VS Code', proficiency: 95, level: 'Advanced' },
-              { name: 'Data Structures & Algorithms', proficiency: 82, level: 'Proficient' },
-              { name: 'OOPs & DBMS', proficiency: 85, level: 'Proficient' }
-            ]
-          }
-        ];
-      }
-
       // ==========================================
-      // Section D: Parse Projects (From PROJECTS section or full document)
+      // Section D: Parse Projects (Strictly 2 or exact projects from Resume)
       // ==========================================
       if (sections.PROJECTS.length > 0) {
         const projBlocks = [];
         let curBlock = [];
-        for (const pline of sections.PROJECTS) {
-          if (pline.startsWith('•') || pline.startsWith('-') || pline.startsWith('*')) {
-            curBlock.push(pline);
+
+        for (let idx = 0; idx < sections.PROJECTS.length; idx++) {
+          const pline = sections.PROJECTS[idx];
+          const isBullet = /^[•\-\*▪▫–—>]\s*/.test(pline);
+          const isTechLine = /^(?:Tech\s*Stack|Technologies|Tools|Stack|Skills\s*Used)[:\s-]/i.test(pline);
+          const isLinkLine = /^(?:GitHub|Live|Demo|Link)[:\s-]/i.test(pline) || pline.includes('github.com') || pline.startsWith('http');
+
+          // A line is a new Project Title if not a bullet, not a tech/link line, and previous block had bullets or description
+          const isPotentialTitle = !isBullet && !isTechLine && !isLinkLine && pline.length < 95;
+
+          if (isPotentialTitle && curBlock.length > 0 && curBlock.some(l => /^[•\-\*▪▫–—>]\s*/.test(l) || l.length > 35)) {
+            projBlocks.push(curBlock);
+            curBlock = [pline];
           } else {
-            if (curBlock.length > 0 && curBlock.some(x => x.startsWith('•') || x.startsWith('-') || x.length > 30)) {
-              projBlocks.push(curBlock);
-              curBlock = [pline];
-            } else {
-              curBlock.push(pline);
-            }
+            curBlock.push(pline);
           }
         }
-        if (curBlock.length > 0) projBlocks.push(curBlock);
+        if (curBlock.length > 0) {
+          projBlocks.push(curBlock);
+        }
+
+        console.log(`🚀 Found exactly ${projBlocks.length} project block(s) in resume.`);
 
         projBlocks.forEach((bLines, idx) => {
-          const titleLine = bLines[0].replace(/^[•\-\d.]\s*/, '').trim();
-          const cleanTitle = titleLine.split(/[\(|–\-:]/)[0].trim();
-          if (cleanTitle && cleanTitle.length > 2) {
-            const bulletLines = bLines.slice(1).map(l => l.replace(/^[•\-*]\s*/, '').trim()).filter(Boolean);
+          const titleLine = bLines[0].replace(/^[0-9•\-\*.)\s]+/, '').trim();
+          const cleanTitle = titleLine.split(/[\(|–\-:]/)[0].trim() || `Project ${idx + 1}`;
+
+          if (cleanTitle && cleanTitle.length > 1) {
+            const bulletLines = bLines.slice(1)
+              .filter(l => !/^(?:Tech\s*Stack|Technologies|Tools|Stack|GitHub|Live|Demo|Link)[:\s-]/i.test(l) && !l.includes('github.com'))
+              .map(l => l.replace(/^[0-9•\-\*▪▫–—.)\s]+/, '').trim())
+              .filter(Boolean);
+
             const desc = bulletLines.length > 0 ? bulletLines.join(' ') : bLines.slice(1).join(' ') || titleLine;
 
             let techStack = [];
-            const techMatch = bLines.join(' ').match(/(?:Tech\s*Stack|Technologies|Tools\s*Used)[:\s-]*([^\n.]+)/i) || titleLine.match(/\(([^)]+)\)/);
-            if (techMatch) {
-              techStack = techMatch[1].split(/[,|/]/).map(t => t.trim()).filter(Boolean);
+            const techLine = bLines.find(l => /^(?:Tech\s*Stack|Technologies|Tools|Stack|Skills\s*Used)[:\s-]/i.test(l));
+            if (techLine) {
+              const rawTech = techLine.replace(/^(?:Tech\s*Stack|Technologies|Tools|Stack|Skills\s*Used)[:\s-]*/i, '');
+              techStack = rawTech.split(/[,|/•]/).map(t => t.trim()).filter(t => t.length > 1);
             } else {
-              ['MongoDB', 'Express.js', 'React.js', 'Node.js', 'JavaScript', 'HTML5', 'CSS3', 'Tailwind CSS', 'REST API', 'MySQL'].forEach(t => {
-                if (bLines.join(' ').toLowerCase().includes(t.toLowerCase())) techStack.push(t);
-              });
+              const titleParen = titleLine.match(/\(([^)]+)\)/);
+              if (titleParen) {
+                techStack = titleParen[1].split(/[,|/]/).map(t => t.trim()).filter(Boolean);
+              } else {
+                ['MongoDB', 'Express.js', 'React.js', 'Node.js', 'JavaScript', 'HTML5', 'CSS3', 'Tailwind CSS', 'REST API', 'Redux', 'JWT', 'MySQL', 'Python', 'Git', 'Postman'].forEach(t => {
+                  if (bLines.join(' ').toLowerCase().includes(t.toLowerCase())) {
+                    if (!techStack.includes(t)) techStack.push(t);
+                  }
+                });
+              }
+            }
+
+            if (techStack.length === 0) {
+              techStack = ['MERN Stack', 'React.js', 'Node.js', 'MongoDB'];
             }
 
             parsed.projects.push({
               id: `project-${Date.now()}-${idx}`,
               title: cleanTitle,
-              category: techStack.includes('React.js') || techStack.includes('Node.js') || techStack.includes('Express.js') ? 'Full Stack MERN' : 'Web Application',
-              featured: parsed.projects.length < 2,
-              image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+              category: techStack.some(t => ['React.js', 'Node.js', 'Express.js', 'MongoDB', 'MERN Stack'].includes(t)) ? 'Full Stack MERN' : 'Web Application',
+              featured: idx === 0,
+              image: idx === 0
+                ? "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80"
+                : "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80",
               summary: desc.length > 180 ? desc.slice(0, 177) + '...' : desc,
               description: desc,
-              techStack: techStack.length > 0 ? techStack : ['MongoDB', 'Express.js', 'React.js', 'Node.js', 'REST APIs'],
-              metrics: [
-                "Engineered modular frontend and backend architecture",
-                "Secured REST APIs with token authorization & schema validation",
+              techStack: techStack,
+              metrics: bulletLines.length > 0 ? bulletLines.slice(0, 3) : [
+                "Engineered scalable modular full-stack architecture",
+                "Secured REST API endpoints with authentication",
                 "Delivered responsive mobile-first user interfaces"
               ],
               architecture: bulletLines.length > 0 ? bulletLines : [desc],
@@ -1325,34 +1311,6 @@
             });
           }
         });
-      }
-
-      // Ensure INK Attendance project is present if in resume or default
-      if (parsed.projects.length === 0 || lowerFull.includes('ink attendance') || lowerFull.includes('attendance')) {
-        if (!parsed.projects.some(p => p.title.toLowerCase().includes('ink attendance'))) {
-          parsed.projects.unshift({
-            id: 'project-ink-attendance',
-            title: 'INK Attendance',
-            category: 'Full Stack MERN',
-            featured: true,
-            image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
-            summary: 'Full-stack automated attendance tracking and employee management system with real-time verification, dashboard analytics, and secure REST APIs.',
-            description: 'INK Attendance is an end-to-end full-stack web application developed with the MERN stack (MongoDB, Express.js, React.js, Node.js). It provides automated daily attendance logging, role-based authorization, reporting analytics, and REST API integration.',
-            techStack: ['MongoDB', 'Express.js', 'React.js', 'Node.js', 'REST APIs', 'Tailwind CSS'],
-            metrics: [
-              'Automated attendance logging with sub-second response times',
-              'Role-based authentication & JWT token session security',
-              'Interactive analytics dashboard for admin reporting'
-            ],
-            architecture: [
-              'React.js single-page frontend with responsive component state management',
-              'Express.js & Node.js REST API handling authentication & CRUD endpoints',
-              'MongoDB database with Mongoose schemas for scalable record storage'
-            ],
-            demoUrl: '#',
-            githubUrl: parsed.personal.github || 'https://github.com/Rakeshbjp'
-          });
-        }
       }
 
       // ==========================================
@@ -1423,13 +1381,6 @@
           institution: inst,
           year: yr,
           details: det
-        });
-      } else if (lowerFull.includes('computer science') || lowerFull.includes('engineering') || lowerFull.includes('bachelor') || lowerFull.includes('b.e')) {
-        parsed.education.push({
-          degree: 'Bachelor of Engineering in Computer Science & Engineering',
-          institution: 'Visvesvaraya Technological University',
-          year: '2020 - 2024',
-          details: 'Specialized in Full Stack Web Development, Data Structures, Database Management Systems, and Software Engineering Principles.'
         });
       }
 
@@ -1502,32 +1453,32 @@
         if (parsedFull.personal.bio) dataObj.personal.bio = parsedFull.personal.bio;
         if (parsedFull.personal.tagline) dataObj.personal.tagline = parsedFull.personal.tagline;
 
-        // Auto-populate Skills if extracted
+        // Set strictly the skills parsed from resume
         if (parsedFull.skills && parsedFull.skills.length > 0) {
           dataObj.skills = parsedFull.skills;
         }
 
-        // Auto-populate Projects if extracted
+        // Set strictly the projects parsed from resume (e.g. 2 projects)
         if (parsedFull.projects && parsedFull.projects.length > 0) {
           dataObj.projects = parsedFull.projects;
         }
 
-        // Auto-populate Experience if extracted
+        // Set strictly the experience parsed from resume
         if (parsedFull.experience && parsedFull.experience.length > 0) {
           dataObj.experience = parsedFull.experience;
         }
 
-        // Auto-populate Education if extracted
+        // Set strictly the education parsed from resume
         if (parsedFull.education && parsedFull.education.length > 0) {
           dataObj.education = parsedFull.education;
         }
 
-        // Auto-populate Certifications if extracted
+        // Set strictly the certifications parsed from resume
         if (parsedFull.certifications && parsedFull.certifications.length > 0) {
           dataObj.certifications = parsedFull.certifications;
         }
 
-        saveWorkingData(dataObj, `🎉 Resume "${file.name}" parsed! All Skills, Projects, Experience, Education & Profile auto-fetched!`);
+        saveWorkingData(dataObj, `🎉 Resume "${file.name}" parsed! Exactly ${dataObj.projects ? dataObj.projects.length : 0} project(s) & all skills auto-fetched!`);
         populateDrawerProfileForm();
         populateDrawerResumeForm();
       };

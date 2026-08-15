@@ -30,31 +30,30 @@ const portfolioData = {
     {
       "id": "project-1",
       "title": "INK Attendance",
-      "category": "Full Stack",
+      "category": "Full Stack MERN",
       "featured": true,
       "image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
-      "summary": "Distributed metrics collector and high-throughput real-time dashboard monitoring microservices latency, error budgets, and log tracing across multi-cloud deployments.",
-      "description": "OmniMesh enables engineering teams to monitor millions of metrics per second with sub-second query latency. Built with Golang backend workers, Kafka event streams, and a high-performance WebGL/Canvas dynamic charting frontend.",
+      "summary": "Full-stack automated attendance tracking and employee management system with real-time verification, dashboard analytics, and secure REST APIs.",
+      "description": "INK Attendance is an end-to-end full-stack web application developed with the MERN stack (MongoDB, Express.js, React.js, Node.js). It provides automated daily attendance logging, role-based authorization, reporting analytics, and REST API integration.",
       "techStack": [
-        "Go",
-        "TypeScript",
-        "React",
-        "Kafka",
-        "ClickHouse",
-        "Docker",
-        "AWS"
+        "MongoDB",
+        "Express.js",
+        "React.js",
+        "Node.js",
+        "REST APIs",
+        "Tailwind CSS"
       ],
       "metrics": [
-        "Processed 5B+ daily telemetry events",
-        "Reduced P99 query latency by 60%",
-        "Saved 35% cloud infrastructure costs"
+        "Automated attendance logging with sub-second response times",
+        "Role-based authentication & JWT token session security",
+        "Interactive analytics dashboard for admin reporting"
       ],
-      "demoUrl": "https://example.com/demo1",
-      "githubUrl": "https://github.com/inkworldwide/INK-Attendance",
+      "demoUrl": "#",
+      "githubUrl": "https://github.com/Rakeshbjp",
       "architecture": [
-        "Distributed Go agents scraping Prometheus endpoints",
-        "Kafka queue streaming telemetry data to ClickHouse DB cluster",
-        "React + Canvas dashboard for live stream rendering"
+        "React.js single-page frontend with responsive component state management",
+        "Express.js & Node.js REST API handling authentication & CRUD endpoints",
+        "MongoDB database with Mongoose schemas for scalable record storage"
       ]
     }
   ],
