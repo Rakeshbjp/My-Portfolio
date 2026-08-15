@@ -760,7 +760,7 @@
       });
     }
 
-    // Coordinate-Aware Intelligent PDF Text Extractor
+    // Multi-Page Coordinate-Aware PDF Text Extractor
     async function extractTextFromPdf(arrayBuffer) {
       if (!window.pdfjsLib) {
         console.warn('PDF.js library not loaded.');
@@ -779,10 +779,10 @@
         });
 
         const pdf = await loadingTask.promise;
-        let fullText = '';
+        let fullDocumentText = '';
 
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
           const textContent = await page.getTextContent({
             normalizeWhitespace: true,
             disableCombineTextItems: false
@@ -791,30 +791,46 @@
           const items = textContent.items || [];
           if (items.length === 0) continue;
 
-          // Group items by vertical Y-line coordinate to preserve proper line breaks
-          const lineMap = new Map();
-          for (const item of items) {
-            if (!item.str) continue;
-            const y = item.transform ? Math.round(item.transform[5] / 4) * 4 : 0;
-            const x = item.transform ? item.transform[4] : 0;
-            if (!lineMap.has(y)) {
-              lineMap.set(y, []);
+          // Group items into visual lines by vertical Y position tolerance (within 3.5px)
+          const lines = [];
+          let currentLine = null;
+
+          // Sort items: Top-to-Bottom by Y descending, Left-to-Right by X ascending
+          items.sort((a, b) => {
+            const yA = a.transform ? a.transform[5] : 0;
+            const yB = b.transform ? b.transform[5] : 0;
+            if (Math.abs(yA - yB) > 3.5) {
+              return yB - yA;
             }
-            lineMap.get(y).push({ str: item.str, x: x });
+            const xA = a.transform ? a.transform[4] : 0;
+            const xB = b.transform ? b.transform[4] : 0;
+            return xA - xB;
+          });
+
+          for (const item of items) {
+            const str = (item.str || '').trim();
+            if (!str) continue;
+            const y = item.transform ? item.transform[5] : 0;
+            const x = item.transform ? item.transform[4] : 0;
+
+            if (!currentLine || Math.abs(currentLine.y - y) > 3.5) {
+              currentLine = { y, items: [{ str, x }] };
+              lines.push(currentLine);
+            } else {
+              currentLine.items.push({ str, x });
+            }
           }
 
-          // Sort line Y descending (top of page down)
-          const sortedY = Array.from(lineMap.keys()).sort((a, b) => b - a);
+          // Reconstruct line text with proper spacing
           let pageText = '';
-          for (const y of sortedY) {
-            const lineItems = lineMap.get(y);
-            lineItems.sort((a, b) => a.x - b.x);
+          for (const lineObj of lines) {
+            lineObj.items.sort((a, b) => a.x - b.x);
             let lineStr = '';
-            for (let j = 0; j < lineItems.length; j++) {
-              const it = lineItems[j];
+            for (let j = 0; j < lineObj.items.length; j++) {
+              const it = lineObj.items[j];
               if (j > 0) {
-                const prev = lineItems[j - 1];
-                if (it.x - prev.x > 8 && !prev.str.endsWith(' ') && !it.str.startsWith(' ')) {
+                const prev = lineObj.items[j - 1];
+                if (it.x - prev.x > 3 && !lineStr.endsWith(' ') && !it.str.startsWith(' ')) {
                   lineStr += ' ';
                 }
               }
@@ -825,12 +841,13 @@
             }
           }
 
-          fullText += pageText + '\n\n';
+          fullDocumentText += pageText + '\n\n';
         }
 
-        return fullText;
+        console.log(`📄 PDF parsed successfully: ${pdf.numPages} pages extracted (${fullDocumentText.length} characters).`);
+        return fullDocumentText;
       } catch (err) {
-        console.warn('Primary PDF text extraction fallback:', err);
+        console.warn('Primary PDF extraction fallback:', err);
         try {
           const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
           let simpleText = '';
@@ -845,6 +862,134 @@
           return '';
         }
       }
+    }
+
+    // Classify whether a line is a resume section heading
+    function classifySectionHeading(line) {
+      if (!line) return null;
+      const clean = line.replace(/^[0-9•\-\*.)\s]+/, '').replace(/[:\s\-_]+$/, '').trim();
+      const lower = clean.toLowerCase();
+
+      if (clean.length > 55 || clean.length < 2) return null;
+      if (clean.includes('.') && !clean.match(/^[0-9]\./) && clean.length > 20) return null;
+
+      // SKILLS
+      if (
+        lower === 'skills' ||
+        lower === 'technical skills' ||
+        lower === 'key skills' ||
+        lower === 'core skills' ||
+        lower === 'core competencies' ||
+        lower === 'technical proficiencies' ||
+        lower === 'technologies' ||
+        lower === 'tech stack' ||
+        lower === 'technical toolkit' ||
+        lower.startsWith('technical skill') ||
+        lower.startsWith('skills &') ||
+        lower.startsWith('skills and') ||
+        lower.includes('technical competencies') ||
+        lower.includes('areas of expertise') ||
+        lower.includes('programming skills') ||
+        lower.includes('software skills')
+      ) {
+        return 'SKILLS';
+      }
+
+      // PROJECTS
+      if (
+        lower === 'projects' ||
+        lower === 'academic projects' ||
+        lower === 'personal projects' ||
+        lower === 'key projects' ||
+        lower === 'selected projects' ||
+        lower === 'featured projects' ||
+        lower === 'project work' ||
+        lower === 'major projects' ||
+        lower === 'capstone project' ||
+        lower === 'portfolio projects' ||
+        lower.startsWith('academic project') ||
+        lower.startsWith('personal project') ||
+        lower.startsWith('key project') ||
+        lower.startsWith('projects &') ||
+        lower.startsWith('projects and')
+      ) {
+        return 'PROJECTS';
+      }
+
+      // EXPERIENCE
+      if (
+        lower === 'experience' ||
+        lower === 'work experience' ||
+        lower === 'professional experience' ||
+        lower === 'employment history' ||
+        lower === 'internships' ||
+        lower === 'internship experience' ||
+        lower === 'work history' ||
+        lower === 'industrial training' ||
+        lower === 'industry experience' ||
+        lower.startsWith('work experience') ||
+        lower.startsWith('professional exp') ||
+        lower.startsWith('internship')
+      ) {
+        return 'EXPERIENCE';
+      }
+
+      // EDUCATION
+      if (
+        lower === 'education' ||
+        lower === 'academic background' ||
+        lower === 'academic qualifications' ||
+        lower === 'educational background' ||
+        lower === 'academics' ||
+        lower === 'educational qualifications' ||
+        lower === 'qualifications' ||
+        lower.startsWith('education &') ||
+        lower.startsWith('education and') ||
+        lower.startsWith('academic qual')
+      ) {
+        return 'EDUCATION';
+      }
+
+      // CERTIFICATIONS
+      if (
+        lower === 'certifications' ||
+        lower === 'certificates' ||
+        lower === 'licenses & certifications' ||
+        lower === 'licenses and certifications' ||
+        lower === 'courses & certifications' ||
+        lower === 'courses and certifications' ||
+        lower === 'accreditations' ||
+        lower === 'achievements & certifications' ||
+        lower === 'training & certifications' ||
+        lower === 'online courses' ||
+        lower === 'courses' ||
+        lower === 'certifications & courses' ||
+        lower.startsWith('certification') ||
+        lower.startsWith('certificate')
+      ) {
+        return 'CERTIFICATIONS';
+      }
+
+      // SUMMARY / OBJECTIVE / PROFILE
+      if (
+        lower === 'summary' ||
+        lower === 'executive summary' ||
+        lower === 'professional summary' ||
+        lower === 'career summary' ||
+        lower === 'career objective' ||
+        lower === 'objective' ||
+        lower === 'profile' ||
+        lower === 'profile summary' ||
+        lower === 'about me' ||
+        lower === 'about' ||
+        lower.startsWith('executive sum') ||
+        lower.startsWith('professional sum') ||
+        lower.startsWith('career obj')
+      ) {
+        return 'SUMMARY';
+      }
+
+      return null;
     }
 
     // Comprehensive Multi-Section Resume Parser (Skills, Projects, Experience, Certs, Education & Profile)
@@ -863,7 +1008,6 @@
       }
 
       // 1. Text Normalization:
-      // Replace non-breaking spaces and zero-width spaces
       const cleanText = (rawText || '')
         .replace(/\u00A0/g, ' ')
         .replace(/[\u200B-\u200D\uFEFF]/g, '')
@@ -882,15 +1026,6 @@
       const lowerFull = fullCleanText.toLowerCase();
 
       // 2. Multi-Section State Machine Segmentation
-      const sectionKeywords = [
-        { type: 'SUMMARY', regex: /^(?:(?:EXECUTIVE|PROFESSIONAL|CAREER)?\s*(?:SUMMARY|OBJECTIVE|PROFILE|ABOUT(?:\s+ME)?))[:\s-]*$/i },
-        { type: 'SKILLS', regex: /^(?:(?:TECHNICAL|CORE|KEY|PROFESSIONAL|AREAS\s+OF)?\s*(?:SKILLS|COMPETENCIES|TECHNOLOGIES|TOOLKIT|STACK))[:\s-]*$/i },
-        { type: 'PROJECTS', regex: /^(?:(?:ACADEMIC|PERSONAL|KEY|FEATURED|SELECTED)?\s*(?:PROJECTS|PORTFOLIO\s+PROJECTS))[:\s-]*$/i },
-        { type: 'EXPERIENCE', regex: /^(?:(?:WORK|PROFESSIONAL|EMPLOYMENT|RELEVANT)?\s*(?:EXPERIENCE|HISTORY|INTERNSHIPS?))[:\s-]*$/i },
-        { type: 'EDUCATION', regex: /^(?:(?:ACADEMIC|EDUCATIONAL)?\s*(?:EDUCATION|BACKGROUND|QUALIFICATIONS|ACADEMICS))[:\s-]*$/i },
-        { type: 'CERTIFICATIONS', regex: /^(?:(?:LICENSES\s+&|ACCREDITATIONS|COURSES\s+&)?\s*(?:CERTIFICATIONS|CERTIFICATES|ACCREDITATIONS|ACHIEVEMENTS))[:\s-]*$/i }
-      ];
-
       const sections = {
         HEADER: [],
         SUMMARY: [],
@@ -906,21 +1041,24 @@
 
       for (let i = 0; i < normalizedLines.length; i++) {
         const line = normalizedLines[i];
-        let matchedType = null;
+        const headingType = classifySectionHeading(line);
 
-        for (const sec of sectionKeywords) {
-          if (sec.regex.test(line) || (line.length < 35 && line.toUpperCase() === line && sec.regex.test(line.replace(/[^A-Z\s]/g, '')))) {
-            matchedType = sec.type;
-            break;
-          }
-        }
-
-        if (matchedType) {
-          currentSection = matchedType;
+        if (headingType) {
+          currentSection = headingType;
         } else {
           sections[currentSection].push(line);
         }
       }
+
+      console.log('📑 Section Segmentation Breakdown:', {
+        HEADER: sections.HEADER.length,
+        SUMMARY: sections.SUMMARY.length,
+        SKILLS: sections.SKILLS.length,
+        PROJECTS: sections.PROJECTS.length,
+        EXPERIENCE: sections.EXPERIENCE.length,
+        EDUCATION: sections.EDUCATION.length,
+        CERTIFICATIONS: sections.CERTIFICATIONS.length
+      });
 
       // ==========================================
       // Section A: Parse Personal & Contact from HEADER & Full Text
@@ -1019,18 +1157,18 @@
       }
 
       // ==========================================
-      // Section C: Parse Skills
+      // Section C: Parse Skills (From SKILLS section or full document)
       // ==========================================
       const skillCategoryDict = {};
-      if (sections.SKILLS.length > 0) {
-        for (const sline of sections.SKILLS) {
-          if (sline.includes(':')) {
-            const parts = sline.split(':');
-            const cat = parts[0].replace(/[^a-zA-Z0-9\s&]/g, '').trim();
-            const items = parts[1].split(/[,|•/]/).map(x => x.trim()).filter(x => x.length > 1);
-            if (cat && items.length > 0) {
-              skillCategoryDict[cat] = (skillCategoryDict[cat] || []).concat(items);
-            }
+      const skillsSourceLines = sections.SKILLS.length > 0 ? sections.SKILLS : normalizedLines;
+
+      for (const sline of skillsSourceLines) {
+        if (sline.includes(':')) {
+          const parts = sline.split(':');
+          const cat = parts[0].replace(/[^a-zA-Z0-9\s&]/g, '').trim();
+          const items = parts[1].split(/[,|•/]/).map(x => x.trim()).filter(x => x.length > 1);
+          if (cat && items.length > 0 && cat.length < 35) {
+            skillCategoryDict[cat] = (skillCategoryDict[cat] || []).concat(items);
           }
         }
       }
@@ -1047,7 +1185,10 @@
             }))
           });
         }
-      } else {
+      }
+
+      // If categories weren't formatted with colons, run full technical taxonomy categorization
+      if (parsed.skills.length === 0) {
         const taxonomy = [
           { category: 'Frontend Development', keywords: ['React.js', 'React', 'HTML5', 'HTML', 'CSS3', 'CSS', 'JavaScript', 'TypeScript', 'Tailwind CSS', 'Bootstrap', 'Redux', 'Responsive UI Design', 'DOM Manipulation'] },
           { category: 'Backend Development', keywords: ['Node.js', 'Express.js', 'RESTful APIs', 'REST APIs', 'JWT', 'Authentication', 'API Integration', 'Middleware', 'MERN Stack'] },
@@ -1081,7 +1222,7 @@
         }
       }
 
-      // Default skills fallback
+      // Default skills fallback if still empty
       if (parsed.skills.length === 0 || lowerFull.includes('mern') || lowerFull.includes('mongodb')) {
         parsed.skills = [
           {
@@ -1128,7 +1269,7 @@
       }
 
       // ==========================================
-      // Section D: Parse Projects
+      // Section D: Parse Projects (From PROJECTS section or full document)
       // ==========================================
       if (sections.PROJECTS.length > 0) {
         const projBlocks = [];
@@ -1137,7 +1278,7 @@
           if (pline.startsWith('•') || pline.startsWith('-') || pline.startsWith('*')) {
             curBlock.push(pline);
           } else {
-            if (curBlock.length > 0 && curBlock.some(x => x.startsWith('•') || x.startsWith('-'))) {
+            if (curBlock.length > 0 && curBlock.some(x => x.startsWith('•') || x.startsWith('-') || x.length > 30)) {
               projBlocks.push(curBlock);
               curBlock = [pline];
             } else {
@@ -1186,6 +1327,7 @@
         });
       }
 
+      // Ensure INK Attendance project is present if in resume or default
       if (parsed.projects.length === 0 || lowerFull.includes('ink attendance') || lowerFull.includes('attendance')) {
         if (!parsed.projects.some(p => p.title.toLowerCase().includes('ink attendance'))) {
           parsed.projects.unshift({
@@ -1223,7 +1365,7 @@
           if (eline.startsWith('•') || eline.startsWith('-')) {
             curExp.push(eline);
           } else {
-            if (curExp.length > 0 && curExp.some(x => x.startsWith('•') || x.startsWith('-'))) {
+            if (curExp.length > 0 && curExp.some(x => x.startsWith('•') || x.startsWith('-') || x.length > 30)) {
               expBlocks.push(curExp);
               curExp = [eline];
             } else {
@@ -1385,7 +1527,7 @@
           dataObj.certifications = parsedFull.certifications;
         }
 
-        saveWorkingData(dataObj, `🎉 Resume "${file.name}" uploaded! All Skills, Projects, Experience & Profile auto-fetched!`);
+        saveWorkingData(dataObj, `🎉 Resume "${file.name}" parsed! All Skills, Projects, Experience, Education & Profile auto-fetched!`);
         populateDrawerProfileForm();
         populateDrawerResumeForm();
       };
