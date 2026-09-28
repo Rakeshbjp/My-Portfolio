@@ -337,9 +337,14 @@
       <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
         <div>
           <h3 style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.2rem;">Full-Stack Architectural Dependency Graph</h3>
-          <p style="font-size: 0.8rem; color: var(--text-muted);">Hover on any node to trace relational connections across tiers and discover projects powered by that technology.</p>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Hover or tap on any node to trace relational connections across tiers and discover projects powered by that technology.</p>
         </div>
         <span style="font-size: 0.75rem; color: var(--accent-primary); background: rgba(var(--accent-primary-rgb), 0.12); padding: 0.2rem 0.6rem; border-radius: var(--radius-full); font-weight: 600;">⚡ Interactive Tech Map</span>
+      </div>
+      <div class="tech-tree-swipe-hint">
+        <span class="swipe-hand">👈</span>
+        <span>Swipe horizontally to inspect all 4 architecture tiers</span>
+        <span class="swipe-hand">👉</span>
       </div>
       <div class="tech-tree-grid">
         ${tiers.map(tier => `
@@ -364,6 +369,7 @@
 
     const cards = treeContainer.querySelectorAll('.tree-node-card');
     cards.forEach(card => {
+      // Mouse hover for desktop
       card.addEventListener('mouseenter', () => {
         if (window.portfolioAudio) window.portfolioAudio.playClick();
         const relatesStr = card.getAttribute('data-relates') || '';
@@ -387,6 +393,34 @@
           c.classList.remove('highlighted');
           c.style.opacity = '1';
         });
+      });
+
+      // Mobile Touch Tap Toggle
+      card.addEventListener('click', () => {
+        const isTap = card.classList.contains('active-tap');
+        cards.forEach(c => {
+          c.classList.remove('highlighted', 'active-tap');
+          c.style.opacity = '1';
+        });
+
+        if (!isTap) {
+          if (window.portfolioAudio) window.portfolioAudio.playClick();
+          card.classList.add('active-tap');
+          const relatesStr = card.getAttribute('data-relates') || '';
+          const relatedNames = relatesStr.split(',').filter(Boolean);
+          relatedNames.push(card.getAttribute('data-skill-name'));
+
+          cards.forEach(c => {
+            const name = c.getAttribute('data-skill-name');
+            if (relatedNames.includes(name)) {
+              c.classList.add('highlighted');
+              c.style.opacity = '1';
+            } else {
+              c.classList.remove('highlighted');
+              c.style.opacity = '0.35';
+            }
+          });
+        }
       });
     });
   }
@@ -1274,6 +1308,80 @@ Let's connect to discuss milestones and project kickoff!`;
     }
   }
 
+  // 14. Mobile Navigation Drawer Controller
+  function initMobileNavigation() {
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const drawer = document.getElementById('mobile-nav-drawer');
+    const closeBtn = document.getElementById('mobile-nav-close-btn');
+    const backdrop = document.getElementById('mobile-nav-backdrop');
+    const mobileLinks = document.querySelectorAll('.mobile-nav-item');
+    const mobileThemeBtn = document.getElementById('mobile-theme-btn');
+    const mobileAudioBtn = document.getElementById('mobile-audio-btn');
+
+    function openMobileNav() {
+      if (!drawer) return;
+      drawer.classList.add('active');
+      drawer.setAttribute('aria-hidden', 'false');
+      if (menuBtn) menuBtn.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      if (window.portfolioAudio) window.portfolioAudio.playClick();
+    }
+
+    function closeMobileNav() {
+      if (!drawer) return;
+      drawer.classList.remove('active');
+      drawer.setAttribute('aria-hidden', 'true');
+      if (menuBtn) menuBtn.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    window.openMobileNav = openMobileNav;
+    window.closeMobileNav = closeMobileNav;
+
+    if (menuBtn) {
+      menuBtn.addEventListener('click', () => {
+        if (drawer && drawer.classList.contains('active')) {
+          closeMobileNav();
+        } else {
+          openMobileNav();
+        }
+      });
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeMobileNav);
+    }
+
+    if (backdrop) {
+      backdrop.addEventListener('click', closeMobileNav);
+    }
+
+    mobileLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        closeMobileNav();
+      });
+    });
+
+    if (mobileThemeBtn) {
+      mobileThemeBtn.addEventListener('click', () => {
+        const nextTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', nextTheme);
+        localStorage.setItem('theme_preference', nextTheme);
+        showToast(`Switched to ${nextTheme} mode`);
+        if (window.portfolioAudio) window.portfolioAudio.playClick();
+      });
+    }
+
+    if (mobileAudioBtn) {
+      mobileAudioBtn.addEventListener('click', () => {
+        if (window.portfolioAudio && typeof window.portfolioAudio.toggleMute === 'function') {
+          const isMuted = window.portfolioAudio.toggleMute();
+          showToast(isMuted ? 'Sound FX Muted 🔇' : 'Sound FX Enabled 🔊');
+        }
+      });
+    }
+  }
+
   // Safe DOM Content Loaded / Ready Handler
   function bootApp() {
     renderPortfolioUI();
@@ -1284,6 +1392,7 @@ Let's connect to discuss milestones and project kickoff!`;
     initBengaluruClock();
     initCustomCursor();
     initKonamiCode();
+    initMobileNavigation();
   }
 
   if (document.readyState === 'loading') {
