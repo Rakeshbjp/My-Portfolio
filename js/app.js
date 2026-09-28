@@ -267,17 +267,18 @@
             <div class="skill-icon">${getIcon(item.icon)}</div>
             <div class="skill-name">${escapeHtml(item.name)}</div>
           </div>
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span class="skill-level-badge">${item.level || 'Proficient'}</span>
-            <div class="card-action-bar">
-              <button class="card-action-btn edit" title="Edit Skill" onclick="window.openItemEditor({ type: 'skill', mode: 'edit', categoryIndex: ${cIdx}, index: ${iIdx}, item: window.getSkillItem(${cIdx}, ${iIdx}) })">
-                ${ICONS.edit}
-              </button>
-              <button class="card-action-btn delete" title="Delete Skill" onclick="window.deleteItem('skill', ${iIdx}, ${cIdx})">
-                ${ICONS.trash}
-              </button>
-            </div>
+          <div class="card-action-bar">
+            <button class="card-action-btn edit" title="Edit Skill" onclick="window.openItemEditor({ type: 'skill', mode: 'edit', categoryIndex: ${cIdx}, index: ${iIdx}, item: window.getSkillItem(${cIdx}, ${iIdx}) })">
+              ${ICONS.edit}
+            </button>
+            <button class="card-action-btn delete" title="Delete Skill" onclick="window.deleteItem('skill', ${iIdx}, ${cIdx})">
+              ${ICONS.trash}
+            </button>
           </div>
+        </div>
+        <div class="skill-meta-row">
+          <span class="skill-level-badge">${item.level || 'Proficient'}</span>
+          <span class="skill-pct-val">${item.proficiency || 85}%</span>
         </div>
         <div class="skill-progress-bar">
           <div class="skill-progress-fill" style="width: ${item.proficiency || 85}%"></div>
