@@ -154,11 +154,50 @@
     `).join('');
   }
 
-  // 3. Skills Matrix Render
+  let activeSkillsView = "grid";
+
+  // 3. Skills Matrix & Interactive Tech Tree Render
   function renderSkills() {
     const tabsContainer = document.getElementById('skills-tabs');
     const gridContainer = document.getElementById('skills-grid');
+    const treeContainer = document.getElementById('tech-tree-container');
+    const controlsBar = document.getElementById('skills-controls-bar');
     if (!tabsContainer || !gridContainer) return;
+
+    // View Switcher Buttons
+    const gridBtn = document.getElementById('skills-view-grid-btn');
+    const treeBtn = document.getElementById('skills-view-tree-btn');
+
+    if (gridBtn && treeBtn) {
+      gridBtn.onclick = () => {
+        activeSkillsView = 'grid';
+        gridBtn.classList.add('active');
+        treeBtn.classList.remove('active');
+        if (window.portfolioAudio) window.portfolioAudio.playClick();
+        renderSkills();
+      };
+      treeBtn.onclick = () => {
+        activeSkillsView = 'tree';
+        treeBtn.classList.add('active');
+        gridBtn.classList.remove('active');
+        if (window.portfolioAudio) window.portfolioAudio.playClick();
+        renderSkills();
+      };
+    }
+
+    if (activeSkillsView === 'tree') {
+      gridContainer.style.display = 'none';
+      if (controlsBar) controlsBar.style.display = 'none';
+      if (treeContainer) {
+        treeContainer.style.display = 'block';
+        renderTechTree();
+      }
+      return;
+    } else {
+      gridContainer.style.display = 'grid';
+      if (controlsBar) controlsBar.style.display = 'flex';
+      if (treeContainer) treeContainer.style.display = 'none';
+    }
 
     const skillsData = data.skills || [];
 
@@ -247,6 +286,111 @@
     `).join('');
   }
 
+  // Interactive Tech Tree Node Graph Renderer
+  function renderTechTree() {
+    const treeContainer = document.getElementById('tech-tree-container');
+    if (!treeContainer) return;
+
+    const tiers = [
+      {
+        id: 'tier-core',
+        title: 'Tier 1: Core Logic & CS',
+        skills: [
+          { name: 'JavaScript (ES6+)', level: 'Advanced', projects: ['INK Attendance', 'Full Stack App'], relatesTo: ['React.js', 'Node.js'] },
+          { name: 'HTML5 & CSS3', level: 'Advanced', projects: ['Responsive UI', 'Cross-Device'], relatesTo: ['Tailwind CSS', 'React.js'] },
+          { name: 'Data Structures & Algorithms', level: 'Proficient', projects: ['Optimization', 'System Design'], relatesTo: ['OOPs & DBMS'] },
+          { name: 'OOPs & DBMS', level: 'Proficient', projects: ['Schema Architecture'], relatesTo: ['MongoDB', 'Express.js'] }
+        ]
+      },
+      {
+        id: 'tier-frontend',
+        title: 'Tier 2: Frontend Engineering',
+        skills: [
+          { name: 'React.js', level: 'Proficient', projects: ['INK Attendance', 'Full Stack App'], relatesTo: ['RESTful APIs', 'Tailwind CSS'] },
+          { name: 'Tailwind CSS', level: 'Proficient', projects: ['INK Attendance', 'Modern UI'], relatesTo: ['Responsive UI Design'] },
+          { name: 'Responsive UI Design', level: 'Proficient', projects: ['Mobile-First', 'Cross-Device'], relatesTo: ['React.js'] }
+        ]
+      },
+      {
+        id: 'tier-backend',
+        title: 'Tier 3: Backend & Services',
+        skills: [
+          { name: 'Node.js', level: 'Proficient', projects: ['INK Attendance', 'REST APIs'], relatesTo: ['Express.js', 'MongoDB'] },
+          { name: 'Express.js', level: 'Proficient', projects: ['REST Services', 'Routing'], relatesTo: ['Authentication (JWT)', 'RESTful APIs'] },
+          { name: 'RESTful APIs', level: 'Proficient', projects: ['API Gateway', 'JSON Payloads'], relatesTo: ['Authentication (JWT)', 'Postman'] },
+          { name: 'Authentication (JWT)', level: 'Proficient', projects: ['Session Guard', 'Token Auth'], relatesTo: ['MongoDB'] }
+        ]
+      },
+      {
+        id: 'tier-data',
+        title: 'Tier 4: Data & DevOps',
+        skills: [
+          { name: 'MongoDB', level: 'Proficient', projects: ['INK Attendance', 'NoSQL Storage'], relatesTo: ['Mongoose ODM'] },
+          { name: 'Mongoose ODM', level: 'Proficient', projects: ['Collection Validation'], relatesTo: ['MongoDB'] },
+          { name: 'Git & GitHub', level: 'Advanced', projects: ['Version Control', 'CI/CD'], relatesTo: ['VS Code'] },
+          { name: 'Postman', level: 'Proficient', projects: ['API Testing', 'Doc Automation'], relatesTo: ['RESTful APIs'] }
+        ]
+      }
+    ];
+
+    treeContainer.innerHTML = `
+      <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h3 style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.2rem;">Full-Stack Architectural Dependency Graph</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Hover on any node to trace relational connections across tiers and discover projects powered by that technology.</p>
+        </div>
+        <span style="font-size: 0.75rem; color: var(--accent-primary); background: rgba(var(--accent-primary-rgb), 0.12); padding: 0.2rem 0.6rem; border-radius: var(--radius-full); font-weight: 600;">⚡ Interactive Tech Map</span>
+      </div>
+      <div class="tech-tree-grid">
+        ${tiers.map(tier => `
+          <div class="tree-column">
+            <div class="tree-col-header">${tier.title}</div>
+            ${tier.skills.map(s => `
+              <div class="tree-node-card" data-skill-name="${escapeHtml(s.name)}" data-relates="${(s.relatesTo || []).join(',')}">
+                <div class="tree-node-header">
+                  <span class="tree-node-title">${escapeHtml(s.name)}</span>
+                  <span class="tree-node-badge">${s.level}</span>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 0.35rem;">Projects Built:</div>
+                <div class="tree-node-projects">
+                  ${s.projects.map(proj => `<span class="tree-node-pill">${escapeHtml(proj)}</span>`).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    const cards = treeContainer.querySelectorAll('.tree-node-card');
+    cards.forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        if (window.portfolioAudio) window.portfolioAudio.playClick();
+        const relatesStr = card.getAttribute('data-relates') || '';
+        const relatedNames = relatesStr.split(',').filter(Boolean);
+        relatedNames.push(card.getAttribute('data-skill-name'));
+
+        cards.forEach(c => {
+          const name = c.getAttribute('data-skill-name');
+          if (relatedNames.includes(name)) {
+            c.classList.add('highlighted');
+            c.style.opacity = '1';
+          } else {
+            c.classList.remove('highlighted');
+            c.style.opacity = '0.35';
+          }
+        });
+      });
+
+      card.addEventListener('mouseleave', () => {
+        cards.forEach(c => {
+          c.classList.remove('highlighted');
+          c.style.opacity = '1';
+        });
+      });
+    });
+  }
+
   // 4. Projects Showcase Render
   function renderProjects() {
     const filtersContainer = document.getElementById('project-filters');
@@ -333,9 +477,35 @@
         openProjectModal(idx);
       });
     });
+
+    init3DCardTilt();
   }
 
-  // Project Detail Modal Popup
+  // 3D Parallax Tilt & Specular Sheen Handler
+  function init3DCardTilt() {
+    const cards = document.querySelectorAll('.project-card');
+    cards.forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -10;
+        const rotateY = ((x - centerX) / centerX) * 10;
+
+        card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.02, 1.02, 1.02)`;
+        card.style.setProperty('--mouse-x', `${((x / rect.width) * 100).toFixed(1)}%`);
+        card.style.setProperty('--mouse-y', `${((y / rect.height) * 100).toFixed(1)}%`);
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+      });
+    });
+  }
+
+  // Project Detail Modal with Tabs (Overview, Architecture Blueprint, Code Peek)
   function openProjectModal(index) {
     const p = data.projects[index];
     if (!p) return;
@@ -344,11 +514,67 @@
     const content = document.getElementById('project-modal-content');
     if (!modal || !content) return;
 
+    if (window.portfolioAudio) window.portfolioAudio.playChime();
+
+    const codeSnippet = (p.title || '').toLowerCase().includes('attendance') ? `// controllers/attendanceController.js
+import Attendance from '../models/Attendance.js';
+import User from '../models/User.js';
+
+/**
+ * Record daily employee attendance with sub-second response
+ * POST /api/v1/attendance/check-in
+ */
+export const logDailyAttendance = async (req, res) => {
+  try {
+    const { userId, coordinates, deviceFingerprint } = req.body;
+    
+    // 1. Verify token user session
+    if (req.user._id.toString() !== userId) {
+      return res.status(403).json({ error: 'Unauthorized credentials' });
+    }
+
+    // 2. Prevent duplicate entries for current business day
+    const today = new Date().setHours(0, 0, 0, 0);
+    const existing = await Attendance.findOne({ userId, date: { $gte: today } });
+    if (existing) {
+      return res.status(409).json({ message: 'Attendance already recorded for today' });
+    }
+
+    // 3. Atomically record log with geo-verification
+    const record = await Attendance.create({
+      userId,
+      timestamp: new Date(),
+      status: 'PRESENT',
+      geoVerified: Boolean(coordinates?.lat && coordinates?.lng),
+      deviceHash: deviceFingerprint
+    });
+
+    return res.status(201).json({ success: true, record });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};` : `// routes/apiRouter.js
+import express from 'express';
+import { verifyJWT } from '../middleware/auth.js';
+import { queryAggregates, createEntity } from '../controllers/dataController.js';
+
+const router = express.Router();
+
+/**
+ * Centralized RESTful pipeline with JWT protection
+ * Scalable microservice endpoint
+ */
+router.route('/v1/entities')
+  .get(verifyJWT, queryAggregates)
+  .post(verifyJWT, createEntity);
+
+export default router;`;
+
     content.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
         <div>
           <span class="project-category-badge" style="position: static; display: inline-block; margin-bottom: 0.5rem;">${escapeHtml(p.category || 'General')}</span>
-          <h2 style="font-family: var(--font-heading); font-size: 1.7rem; font-weight: 800; margin-bottom: 0.5rem;">${escapeHtml(p.title)}</h2>
+          <h2 style="font-family: var(--font-heading); font-size: 1.6rem; font-weight: 800; margin-bottom: 0.25rem;">${escapeHtml(p.title)}</h2>
         </div>
         <div style="display: flex; gap: 0.5rem;">
           <button class="btn btn-secondary btn-sm" onclick="window.openItemEditor({ type: 'project', mode: 'edit', index: ${index}, item: window.getProjectItem(${index}) }); document.getElementById('project-modal').classList.remove('active');">
@@ -360,36 +586,97 @@
         </div>
       </div>
 
-      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.25rem;">${escapeHtml(p.description || p.summary || '')}</p>
+      <!-- Modal Tabs Header -->
+      <div class="modal-tabs-header">
+        <button type="button" class="modal-tab-btn active" data-tab="tab-overview">Overview</button>
+        <button type="button" class="modal-tab-btn" data-tab="tab-arch">🏛️ Architecture Blueprint</button>
+        <button type="button" class="modal-tab-btn" data-tab="tab-code">💻 Code Peek</button>
+      </div>
 
-      <img src="${escapeHtml(p.image || '')}" alt="${escapeHtml(p.title)}" style="width: 100%; height: 260px; object-fit: cover; border-radius: var(--radius-md); margin-bottom: 1.5rem; border: 1px solid var(--border-color);" onerror="this.src='https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80'" />
+      <!-- Tab 1: Overview -->
+      <div class="modal-tab-pane active" id="modal-tab-overview">
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.25rem;">${escapeHtml(p.description || p.summary || '')}</p>
 
-      ${Array.isArray(p.techStack) && p.techStack.length > 0 ? `
-        <div style="margin-bottom: 1.25rem;">
-          <h4 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-primary); letter-spacing: 0.05em; margin-bottom: 0.5rem;">Technologies Used</h4>
-          <div class="project-tech-tags">
-            ${p.techStack.map(t => `<span class="tech-tag">${escapeHtml(t)}</span>`).join('')}
+        <img src="${escapeHtml(p.image || '')}" alt="${escapeHtml(p.title)}" style="width: 100%; height: 260px; object-fit: cover; border-radius: var(--radius-md); margin-bottom: 1.5rem; border: 1px solid var(--border-color);" onerror="this.src='https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80'" />
+
+        ${Array.isArray(p.techStack) && p.techStack.length > 0 ? `
+          <div style="margin-bottom: 1.25rem;">
+            <h4 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-primary); letter-spacing: 0.05em; margin-bottom: 0.5rem;">Technologies Used</h4>
+            <div class="project-tech-tags">
+              ${p.techStack.map(t => `<span class="tech-tag">${escapeHtml(t)}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${Array.isArray(p.metrics) && p.metrics.length > 0 ? `
+          <div style="margin-bottom: 1.5rem;">
+            <h4 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-primary); letter-spacing: 0.05em; margin-bottom: 0.5rem;">Key Achievements & Metrics</h4>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem;">
+              ${p.metrics.map(m => `<li style="font-size: 0.9rem; color: var(--text-muted); position: relative; padding-left: 1.2rem;"><span style="position: absolute; left: 0; color: var(--accent-primary);">⚡</span> ${escapeHtml(m)}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- Tab 2: Architecture Blueprint -->
+      <div class="modal-tab-pane" id="modal-tab-arch" style="display: none;">
+        <div class="blueprint-flow-wrapper">
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-bottom: 1rem; font-weight: 700;">
+            Live Request-Response Pipeline (Packet Flow Simulation)
+          </div>
+          <div class="blueprint-nodes-row">
+            <div class="blueprint-node">
+              <div class="bp-icon">🖥️</div>
+              <div class="bp-title">Client Browser</div>
+              <div class="bp-tech">React.js SPA</div>
+            </div>
+            <div class="blueprint-arrow">
+              <div class="blueprint-packet"></div>
+            </div>
+            <div class="blueprint-node">
+              <div class="bp-icon">⚡</div>
+              <div class="bp-title">API Gateway</div>
+              <div class="bp-tech">Express.js Router</div>
+            </div>
+            <div class="blueprint-arrow">
+              <div class="blueprint-packet" style="animation-delay: 0.6s;"></div>
+            </div>
+            <div class="blueprint-node">
+              <div class="bp-icon">🔐</div>
+              <div class="bp-title">Auth Guard</div>
+              <div class="bp-tech">JWT Middleware</div>
+            </div>
+            <div class="blueprint-arrow">
+              <div class="blueprint-packet" style="animation-delay: 1.2s;"></div>
+            </div>
+            <div class="blueprint-node">
+              <div class="bp-icon">🗄️</div>
+              <div class="bp-title">Database</div>
+              <div class="bp-tech">MongoDB Cluster</div>
+            </div>
           </div>
         </div>
-      ` : ''}
 
-      ${Array.isArray(p.metrics) && p.metrics.length > 0 ? `
-        <div style="margin-bottom: 1.5rem;">
-          <h4 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-primary); letter-spacing: 0.05em; margin-bottom: 0.5rem;">Key Achievements & Metrics</h4>
-          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem;">
-            ${p.metrics.map(m => `<li style="font-size: 0.9rem; color: var(--text-muted); position: relative; padding-left: 1.2rem;"><span style="position: absolute; left: 0; color: var(--accent-primary);">⚡</span> ${escapeHtml(m)}</li>`).join('')}
-          </ul>
-        </div>
-      ` : ''}
+        ${Array.isArray(p.architecture) && p.architecture.length > 0 ? `
+          <div style="margin-bottom: 1.5rem; background: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <h4 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-primary); letter-spacing: 0.05em; margin-bottom: 0.75rem;">System Architecture Specifications</h4>
+            <ol style="padding-left: 1.2rem; font-size: 0.88rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.4rem;">
+              ${p.architecture.map(a => `<li>${escapeHtml(a)}</li>`).join('')}
+            </ol>
+          </div>
+        ` : ''}
+      </div>
 
-      ${Array.isArray(p.architecture) && p.architecture.length > 0 ? `
-        <div style="margin-bottom: 1.5rem; background: var(--bg-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-          <h4 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-primary); letter-spacing: 0.05em; margin-bottom: 0.5rem;">System Architecture Overview</h4>
-          <ol style="padding-left: 1.2rem; font-size: 0.85rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.3rem;">
-            ${p.architecture.map(a => `<li>${escapeHtml(a)}</li>`).join('')}
-          </ol>
+      <!-- Tab 3: Code Peek -->
+      <div class="modal-tab-pane" id="modal-tab-code" style="display: none;">
+        <div class="code-peek-wrapper">
+          <div class="code-peek-header">
+            <span class="code-peek-filename">controllers/handler.js • (MERN Architecture)</span>
+            <button type="button" class="code-peek-copy-btn" id="code-copy-btn">📋 Copy Code</button>
+          </div>
+          <pre class="code-peek-pre"><code>${escapeHtml(codeSnippet)}</code></pre>
         </div>
-      ` : ''}
+      </div>
 
       <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
         ${p.demoUrl ? `<a href="${p.demoUrl}" target="_blank" class="btn btn-primary">${getIcon('external')} Launch Live Demo</a>` : ''}
@@ -397,8 +684,36 @@
       </div>
     `;
 
+    // Modal Tabs Switching
+    content.querySelectorAll('.modal-tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        content.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+        content.querySelectorAll('.modal-tab-pane').forEach(p => p.style.display = 'none');
+
+        btn.classList.add('active');
+        const tabTarget = btn.getAttribute('data-tab');
+        const pane = content.querySelector(`#modal-${tabTarget}`);
+        if (pane) pane.style.display = 'block';
+        if (window.portfolioAudio) window.portfolioAudio.playClick();
+      });
+    });
+
+    // Copy Code button
+    const copyBtn = content.querySelector('#code-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(codeSnippet).then(() => {
+          copyBtn.textContent = '✅ Copied!';
+          setTimeout(() => copyBtn.textContent = '📋 Copy Code', 2000);
+          showToast('Code snippet copied to clipboard!');
+        });
+      });
+    }
+
     modal.classList.add('active');
   }
+
+  window.openProjectModalByIndex = openProjectModal;
 
   // 5. Work Experience Render
   function renderExperience() {
@@ -728,12 +1043,247 @@
       .replace(/'/g, '&#039;');
   }
 
+  // 10. Collaboration Scope & Budget Estimator
+  function initScopeEstimator() {
+    const scopeContainer = document.querySelector('.scope-estimator-container');
+    if (!scopeContainer) return;
+
+    let selectedScope = 'Full-Stack MERN Application';
+    let targetWeeks = 4;
+    let selectedFeatures = [
+      'User Auth & JWT Session Security',
+      'MongoDB Aggregations & Schema Design',
+      'RESTful API Endpoints & CRUD',
+      'Mobile-First Responsive Tailwind Design'
+    ];
+
+    const scopeBtns = scopeContainer.querySelectorAll('#scope-type-options .scope-btn');
+    const slider = document.getElementById('estimator-timeline-slider');
+    const weeksBadge = document.getElementById('estimator-weeks-badge');
+    const summaryScope = document.getElementById('summary-scope-val');
+    const summaryTimeline = document.getElementById('summary-timeline-val');
+    const summaryTechPills = document.getElementById('summary-tech-pills');
+    const featureCheckboxes = document.querySelectorAll('#estimator-features-grid input');
+    const applyBtn = document.getElementById('estimator-apply-btn');
+
+    function updateSummary() {
+      if (summaryScope) summaryScope.textContent = selectedScope;
+      if (summaryTimeline) summaryTimeline.textContent = `~${targetWeeks} Weeks`;
+      if (weeksBadge) weeksBadge.textContent = `${targetWeeks} Weeks`;
+
+      const stack = ['React.js', 'Node.js', 'Express.js', 'MongoDB', 'Tailwind CSS'];
+      if (selectedFeatures.some(f => f.includes('WebSockets'))) {
+        stack.push('Socket.io');
+      }
+      if (selectedFeatures.some(f => f.includes('Dashboard'))) {
+        stack.push('Chart.js');
+      }
+      if (selectedFeatures.some(f => f.includes('Auth'))) {
+        stack.push('JWT & Bcrypt');
+      }
+
+      if (summaryTechPills) {
+        summaryTechPills.innerHTML = [...new Set(stack)].map(t => `<span>${t}</span>`).join(' ');
+      }
+    }
+
+    scopeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        scopeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedScope = btn.getAttribute('data-type');
+        const defaultWeeks = parseInt(btn.getAttribute('data-weeks'), 10) || 4;
+        if (slider) {
+          slider.value = defaultWeeks;
+          targetWeeks = defaultWeeks;
+        }
+        if (window.portfolioAudio) window.portfolioAudio.playClick();
+        updateSummary();
+      });
+    });
+
+    if (slider) {
+      slider.addEventListener('input', (e) => {
+        targetWeeks = parseInt(e.target.value, 10);
+        updateSummary();
+      });
+    }
+
+    featureCheckboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        const label = cb.closest('.feature-tag');
+        if (cb.checked) {
+          label.classList.add('checked');
+        } else {
+          label.classList.remove('checked');
+        }
+
+        selectedFeatures = Array.from(featureCheckboxes)
+          .filter(c => c.checked)
+          .map(c => c.value);
+
+        if (window.portfolioAudio) window.portfolioAudio.playClick();
+        updateSummary();
+      });
+    });
+
+    if (applyBtn) {
+      applyBtn.addEventListener('click', () => {
+        const msgField = document.getElementById('contact-msg');
+        if (!msgField) return;
+
+        const generatedMessage = `Hi Rakesh,
+
+I would like to discuss collaborating with you on a project:
+• Target Scope: ${selectedScope}
+• Estimated Timeline: ${targetWeeks} Weeks
+• Key Architectural Modules:
+${selectedFeatures.map(f => `  - ${f}`).join('\n')}
+• Preferred Tech Stack: React.js, Node.js, Express, MongoDB
+
+Let's connect to discuss milestones and project kickoff!`;
+
+        msgField.value = generatedMessage;
+
+        const form = document.getElementById('contact-form');
+        if (form) {
+          form.scrollIntoView({ behavior: 'smooth' });
+          msgField.focus();
+        }
+
+        if (window.portfolioAudio) window.portfolioAudio.playChime();
+        showToast('Scope plan applied to your message draft! 🚀');
+      });
+    }
+
+    updateSummary();
+  }
+
+  // 11. Real-Time Bengaluru Local Time Widget
+  function initBengaluruClock() {
+    const clockEl = document.getElementById('blr-clock-val');
+    const badgeEl = document.getElementById('blr-status-badge');
+    if (!clockEl) return;
+
+    function tick() {
+      // Calculate IST (UTC +5:30)
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const istDate = new Date(utc + (3600000 * 5.5));
+
+      let hours = istDate.getHours();
+      const minutes = String(istDate.getMinutes()).padStart(2, '0');
+      const seconds = String(istDate.getSeconds()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12;
+
+      clockEl.textContent = `${displayHours}:${minutes}:${seconds} ${ampm} IST`;
+
+      if (badgeEl) {
+        if (hours >= 9 && hours < 22) {
+          badgeEl.textContent = '🟢 Available / Coding Now';
+          badgeEl.style.color = '#10b981';
+        } else {
+          badgeEl.textContent = '🌙 Offline / Recharging (Response <4h)';
+          badgeEl.style.color = '#f59e0b';
+        }
+      }
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  // 12. Custom Magnetic Fluid Cursor
+  function initCustomCursor() {
+    const dot = document.getElementById('cursor-dot');
+    const ring = document.getElementById('cursor-ring');
+    if (!dot || !ring) return;
+
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let ringX = mouseX;
+    let ringY = mouseY;
+
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
+    });
+
+    function renderCursor() {
+      ringX += (mouseX - ringX) * 0.18;
+      ringY += (mouseY - ringY) * 0.18;
+      ring.style.transform = `translate3d(${ringX.toFixed(2)}px, ${ringY.toFixed(2)}px, 0) translate(-50%, -50%)`;
+      requestAnimationFrame(renderCursor);
+    }
+    requestAnimationFrame(renderCursor);
+
+    const interactiveSelector = 'a, button, input, textarea, select, .project-card, .skill-card, .tree-node-card, .accent-dot, .palette-item, .hud-btn';
+    document.addEventListener('mouseover', (e) => {
+      if (e.target.closest(interactiveSelector)) {
+        ring.classList.add('hovering');
+      }
+    });
+    document.addEventListener('mouseout', (e) => {
+      if (e.target.closest(interactiveSelector)) {
+        ring.classList.remove('hovering');
+      }
+    });
+  }
+
+  // 13. Konami Code Easter Egg (Developer God Mode)
+  function initKonamiCode() {
+    const konamiSequence = [
+      'ArrowUp', 'ArrowUp',
+      'ArrowDown', 'ArrowDown',
+      'ArrowLeft', 'ArrowRight',
+      'ArrowLeft', 'ArrowRight',
+      'b', 'a'
+    ];
+    let konamiIndex = 0;
+
+    window.addEventListener('keydown', (e) => {
+      const key = e.key;
+      const expected = konamiSequence[konamiIndex];
+
+      if (key.toLowerCase() === expected.toLowerCase()) {
+        konamiIndex++;
+        if (konamiIndex === konamiSequence.length) {
+          konamiIndex = 0;
+          triggerGodMode();
+        }
+      } else {
+        konamiIndex = 0;
+      }
+    });
+
+    function triggerGodMode() {
+      document.documentElement.setAttribute('data-accent', 'gold');
+      localStorage.setItem('accent_preference', 'gold');
+
+      if (window.portfolioAudio) {
+        window.portfolioAudio.playCelebration();
+      }
+
+      if (typeof window.triggerCelebrationFireworks === 'function') {
+        window.triggerCelebrationFireworks();
+      }
+
+      showToast('🏆 Developer God Mode Unlocked! Gold Theme & Fireworks Engaged! ⚡');
+    }
+  }
+
   // Safe DOM Content Loaded / Ready Handler
   function bootApp() {
     renderPortfolioUI();
     initContactForm();
     initThemeController();
     initModals();
+    initScopeEstimator();
+    initBengaluruClock();
+    initCustomCursor();
+    initKonamiCode();
   }
 
   if (document.readyState === 'loading') {

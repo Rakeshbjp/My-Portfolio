@@ -43,6 +43,10 @@
 </head>
 <body>
 
+  <!-- Custom Magnetic Fluid Cursor -->
+  <div class="custom-cursor-dot" id="cursor-dot"></div>
+  <div class="custom-cursor-ring" id="cursor-ring"></div>
+
   <!-- Ambient Interactive Canvas Background -->
   <canvas id="ambient-canvas"></canvas>
 
@@ -64,9 +68,33 @@
       </ul>
 
       <div class="nav-actions">
+        <!-- Spotlight Command Palette Trigger -->
+        <button id="nav-palette-btn" class="palette-nav-trigger" onclick="window.openCommandPalette && window.openCommandPalette()" title="Spotlight Command Palette (Ctrl + K / Cmd + K)" aria-label="Spotlight Command Palette">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span class="palette-trigger-text">Search</span>
+          <kbd class="palette-kbd-badge">⌘K</kbd>
+        </button>
+
+        <!-- Interactive Terminal CLI Toggle -->
+        <button id="nav-terminal-btn" class="icon-btn" onclick="window.toggleTerminalModal && window.toggleTerminalModal()" title="Open Terminal (~CLI / Backtick)" aria-label="Open Terminal (~CLI)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+        </button>
+
+        <!-- Web Audio FX Mute/Wave Toggle -->
+        <button id="audio-toggle-btn" class="icon-btn" title="Toggle Sound FX" aria-label="Toggle Sound FX">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
+
         <!-- Theme Toggle Button -->
         <button id="theme-toggle-btn" class="icon-btn" title="Toggle Dark/Light Mode" aria-label="Toggle Dark/Light Mode">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="5"></circle>
             <line x1="12" y1="1" x2="12" y2="3"></line>
             <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -81,7 +109,7 @@
 
         <!-- Live Content & Customizer Drawer Toggle -->
         <button id="toggle-customizer-btn" class="icon-btn" title="Portfolio Settings & Content Editor" aria-label="Portfolio Settings & Content Editor">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
@@ -99,9 +127,18 @@
     <div class="container">
       <div class="hero-grid">
         <div class="hero-content">
-          <div class="status-pill">
-            <span class="pulse-dot"></span>
-            <span id="hero-availability">Available for New Opportunities</span>
+          <div class="hero-status-row">
+            <div class="status-pill">
+              <span class="pulse-dot"></span>
+              <span id="hero-availability">Available for New Opportunities</span>
+            </div>
+            <!-- Bengaluru Local Status Widget -->
+            <div class="blr-status-widget" id="blr-status-widget" title="Live Bengaluru, India Time (IST)">
+              <span class="blr-flag">🇮🇳</span>
+              <span class="blr-city">BLR:</span>
+              <span class="blr-clock" id="blr-clock-val">12:50 PM</span>
+              <span class="blr-status-badge" id="blr-status-badge">🟢 Coding Now</span>
+            </div>
           </div>
 
           <h1 class="hero-title">
@@ -174,6 +211,16 @@
           <p class="section-subtitle">Categorized proficiency across modern programming languages, cloud systems, databases, and frameworks.</p>
         </div>
         <div class="section-action-buttons">
+          <!-- Skills View Mode Switcher -->
+          <div class="skills-view-switch" id="skills-view-switch">
+            <button type="button" class="view-switch-btn active" id="skills-view-grid-btn" data-view="grid" title="Standard Categorized Grid View">
+              ▦ Grid
+            </button>
+            <button type="button" class="view-switch-btn" id="skills-view-tree-btn" data-view="tree" title="Interactive Connected Tech Tree Graph">
+              🌳 Tech Tree
+            </button>
+          </div>
+
           <button class="btn btn-primary btn-sm" onclick="window.openItemEditor({ type: 'skill', mode: 'add' })">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Add Skill
@@ -181,7 +228,7 @@
         </div>
       </div>
 
-      <div class="skills-controls">
+      <div class="skills-controls" id="skills-controls-bar">
         <div class="skills-tabs" id="skills-tabs">
           <!-- Filter Tabs -->
         </div>
@@ -192,7 +239,13 @@
         </div>
       </div>
 
+      <!-- Standard Grid View -->
       <div class="skills-grid" id="skills-grid">
+        <!-- Rendered by app.js -->
+      </div>
+
+      <!-- Interactive Tech Tree Graph View -->
+      <div class="tech-tree-wrapper" id="tech-tree-container" style="display: none;">
         <!-- Rendered by app.js -->
       </div>
     </div>
@@ -323,8 +376,91 @@
     <div class="container">
       <div class="section-header">
         <span class="section-tag">GET IN TOUCH</span>
-        <h2 class="section-title">Let's Connect</h2>
-        <p class="section-subtitle">Have an opportunity, collaboration idea, or question? Send a message directly.</p>
+        <h2 class="section-title">Let's Connect & Collaborate</h2>
+        <p class="section-subtitle">Plan a project scope, explore full-time opportunities, or send an inquiry directly.</p>
+      </div>
+
+      <!-- Interactive Collaboration & Project Scope Estimator -->
+      <div class="scope-estimator-container">
+        <div class="estimator-header">
+          <div class="estimator-title-group">
+            <span class="estimator-badge">⚡ INTERACTIVE SCOPE ESTIMATOR</span>
+            <h3 class="estimator-title">Project Collaboration & Scope Builder</h3>
+            <p class="estimator-sub">Estimate timeline, determine the optimal tech stack, and auto-compose your contact message in one click.</p>
+          </div>
+        </div>
+
+        <div class="estimator-body">
+          <div class="estimator-controls-col">
+            <!-- 1. Scope Option -->
+            <div class="estimator-field">
+              <label class="est-field-label">1. Select Project Scope & Target</label>
+              <div class="scope-options-grid" id="scope-type-options">
+                <button type="button" class="scope-btn active" data-type="Full-Stack MERN Application" data-weeks="4-6">Full-Stack MERN</button>
+                <button type="button" class="scope-btn" data-type="MVP Launch Sprint" data-weeks="2-3">MVP Sprint</button>
+                <button type="button" class="scope-btn" data-type="REST API & Backend Architecture" data-weeks="3-5">REST API / Backend</button>
+                <button type="button" class="scope-btn" data-type="Interactive Frontend & UI/UX" data-weeks="2-4">Interactive UI/UX</button>
+              </div>
+            </div>
+
+            <!-- 2. Timeline Slider -->
+            <div class="estimator-field">
+              <div class="slider-header-row">
+                <label class="est-field-label">2. Target Delivery Timeline</label>
+                <span class="estimator-weeks-badge" id="estimator-weeks-badge">4 Weeks</span>
+              </div>
+              <input type="range" id="estimator-timeline-slider" min="1" max="12" value="4" class="estimator-slider" />
+              <div class="slider-ticks">
+                <span>1 Wk (Sprint)</span>
+                <span>6 Wks (Standard)</span>
+                <span>12+ Wks (Enterprise)</span>
+              </div>
+            </div>
+
+            <!-- 3. Key Technical Modules -->
+            <div class="estimator-field">
+              <label class="est-field-label">3. Core Architectural Modules</label>
+              <div class="feature-tags-grid" id="estimator-features-grid">
+                <label class="feature-tag checked"><input type="checkbox" value="User Auth & JWT Session Security" checked /> 🔐 JWT Auth & Security</label>
+                <label class="feature-tag checked"><input type="checkbox" value="MongoDB Aggregations & Schema Design" checked /> 🗄️ MongoDB Collections</label>
+                <label class="feature-tag checked"><input type="checkbox" value="RESTful API Endpoints & CRUD" checked /> 🌐 RESTful APIs</label>
+                <label class="feature-tag"><input type="checkbox" value="Real-Time WebSockets & Notifications" /> ⚡ Real-Time WebSockets</label>
+                <label class="feature-tag"><input type="checkbox" value="Interactive Analytics & Reporting Dashboard" /> 📊 Admin Dashboard</label>
+                <label class="feature-tag checked"><input type="checkbox" value="Mobile-First Responsive Tailwind Design" checked /> 📱 Responsive Mobile UI</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estimator Output & Recommendation Card -->
+          <div class="estimator-summary-col">
+            <div class="summary-card">
+              <div class="summary-card-header">
+                <span class="summary-icon">🎯</span>
+                <span class="summary-title">Scope Recommendation</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Selected Scope:</span>
+                <strong class="summary-val" id="summary-scope-val">Full-Stack MERN Application</strong>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Target Timeline:</span>
+                <strong class="summary-val" id="summary-timeline-val">~4 Weeks</strong>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Recommended Tech Stack:</span>
+                <div class="summary-tech-pills" id="summary-tech-pills">
+                  <span>React.js</span> <span>Node.js</span> <span>Express.js</span> <span>MongoDB</span> <span>Tailwind CSS</span>
+                </div>
+              </div>
+              <div class="summary-action-area">
+                <button type="button" id="estimator-apply-btn" class="btn btn-primary" style="width: 100%; padding: 0.75rem 1rem;">
+                  ✨ Apply Scope to Message Form
+                </button>
+                <p class="summary-hint">Auto-fills the message box below with structured technical specifications.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="contact-grid">
@@ -691,9 +827,12 @@
   </script>
 
   <!-- JavaScript Scripts -->
-  <script src="js/data.js?v=14"></script>
-  <script src="js/canvas-bg.js?v=14"></script>
-  <script src="js/customizer.js?v=14"></script>
-  <script src="js/app.js?v=14"></script>
+  <script src="js/data.js?v=15"></script>
+  <script src="js/audio.js?v=15"></script>
+  <script src="js/canvas-bg.js?v=15"></script>
+  <script src="js/terminal.js?v=15"></script>
+  <script src="js/command-palette.js?v=15"></script>
+  <script src="js/customizer.js?v=15"></script>
+  <script src="js/app.js?v=15"></script>
 </body>
 </html>
